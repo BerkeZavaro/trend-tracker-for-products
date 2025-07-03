@@ -3,110 +3,128 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Target, DollarSign, Lightbulb, Zap } from 'lucide-react';
+import { useData } from '@/contexts/DataContext';
 
 interface RecommendationsPanelProps {
   productId: string;
   timeFrame: { start: string; end: string };
 }
 
-// Analyze performance and generate recommendations
-const generateRecommendations = (productId: string) => {
-  // Mock analysis - in real app, this would analyze actual data
-  const mockAnalysis = {
-    currentCPA: 72.50,
-    avgSale: 100.95,
-    profitMargin: 28.8,
-    revenueGrowth: 12.5,
-    orderGrowth: 8.3,
-    worstMonth: 'January 2024',
-    bestMonth: 'March 2024',
-    seasonalTrend: 'increasing',
-    channelPerformance: {
-      google: { cpa: 68.20, orders: 450, performance: 'excellent' },
-      facebook: { cpa: 78.90, orders: 320, performance: 'good' },
-      amazon: { cpa: 85.40, orders: 280, performance: 'average' },
-      email: { cpa: 45.20, orders: 197, performance: 'excellent' }
+const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProps) => {
+  const { getProductData, isDataLoaded } = useData();
+
+  // Generate recommendations based on real data
+  const generateRecommendations = () => {
+    if (!isDataLoaded || !productId) {
+      return [];
     }
+
+    const productData = getProductData(productId);
+    
+    // Filter data by time frame
+    const filteredData = productData.filter(item => {
+      return item.month >= timeFrame.start && item.month <= timeFrame.end;
+    });
+
+    if (filteredData.length === 0) {
+      return [{
+        type: 'info',
+        priority: 'medium',
+        title: 'No Data Available',
+        description: 'No data found for the selected time period. Try adjusting your date range.',
+        icon: AlertTriangle,
+        color: 'orange',
+        action: 'Select a different date range'
+      }];
+    }
+
+    const recommendations = [];
+
+    // Calculate actual metrics
+    const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalAdSpend = filteredData.reduce((sum, item) => sum + item.adSpend, 0);
+    const totalOrders = filteredData.reduce((sum, item) => sum + item.orders, 0);
+    const totalCosts = filteredData.reduce((sum, item) => sum + item.adSpend + item.nonAdCosts + item.thirdPartyCosts, 0);
+    
+    const avgCPA = totalOrders > 0 ? totalAdSpend / totalOrders : 0;
+    const avgSale = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
+
+    // CPA Analysis
+    if (avgCPA > 0 && avgSale > 0) {
+      if (avgCPA < avgSale * 0.7) {
+        recommendations.push({
+          type: 'scale',
+          priority: 'high',
+          title: 'Scale Advertising Spend',
+          description: `Your CPA ($${avgCPA.toFixed(2)}) is well below average sale value ($${avgSale.toFixed(2)}). Consider increasing ad spend.`,
+          icon: TrendingUp,
+          color: 'green',
+          action: 'Increase budget by 25-30%'
+        });
+      } else if (avgCPA > avgSale * 0.85) {
+        recommendations.push({
+          type: 'optimize',
+          priority: 'high',
+          title: 'Optimize Ad Performance',
+          description: `CPA ($${avgCPA.toFixed(2)}) is too high relative to average sale value ($${avgSale.toFixed(2)}).`,
+          icon: Target,
+          color: 'red',
+          action: 'Review targeting and bidding strategy'
+        });
+      }
+    }
+
+    // Profit Margin Analysis
+    if (profitMargin > 25) {
+      recommendations.push({
+        type: 'growth',
+        priority: 'medium',
+        title: 'Strong Margins - Consider Growth',
+        description: `Healthy profit margin (${profitMargin.toFixed(1)}%) provides room for testing new strategies.`,
+        icon: Lightbulb,
+        color: 'purple',
+        action: 'Test new advertising channels'
+      });
+    } else if (profitMargin < 15 && profitMargin > -100) {
+      recommendations.push({
+        type: 'margins',
+        priority: 'high',
+        title: 'Review Cost Structure',
+        description: `Profit margin (${profitMargin.toFixed(1)}%) needs improvement. Review costs and pricing.`,
+        icon: AlertTriangle,
+        color: 'orange',
+        action: 'Audit all costs and pricing strategy'
+      });
+    }
+
+    // Monthly Performance Analysis
+    if (filteredData.length >= 2) {
+      const sortedData = filteredData.sort((a, b) => a.month.localeCompare(b.month));
+      const bestMonth = sortedData.reduce((best, current) => 
+        current.revenue > best.revenue ? current : best
+      );
+      const worstMonth = sorteredData.reduce((worst, current) => 
+        current.revenue < worst.revenue ? current : worst
+      );
+
+      if (bestMonth.month !== worstMonth.month) {
+        recommendations.push({
+          type: 'seasonal',
+          priority: 'medium',
+          title: 'Performance Variation Detected',
+          description: `${bestMonth.month} was your best month ($${bestMonth.revenue.toLocaleString()}) vs ${worstMonth.month} ($${worstMonth.revenue.toLocaleString()}).`,
+          icon: TrendingUp,
+          color: 'teal',
+          action: 'Analyze what worked in top-performing months'
+        });
+      }
+    }
+
+    return recommendations;
   };
 
-  const recommendations = [];
-
-  // CPA Analysis
-  if (mockAnalysis.currentCPA < mockAnalysis.avgSale * 0.7) {
-    recommendations.push({
-      type: 'scale',
-      priority: 'high',
-      title: 'Scale Advertising Spend',
-      description: 'Your CPA is well below average sale value. Consider increasing ad spend to capture more profitable orders.',
-      icon: TrendingUp,
-      color: 'green',
-      action: 'Increase budget by 25-30%'
-    });
-  } else if (mockAnalysis.currentCPA > mockAnalysis.avgSale * 0.85) {
-    recommendations.push({
-      type: 'optimize',
-      priority: 'high',
-      title: 'Optimize Ad Performance',
-      description: 'CPA is too high relative to average sale value. Focus on improving conversion rates or reducing costs.',
-      icon: Target,
-      color: 'red',
-      action: 'Review targeting and bidding strategy'
-    });
-  }
-
-  // Channel Performance
-  const bestChannel = Object.entries(mockAnalysis.channelPerformance)
-    .sort(([,a], [,b]) => a.cpa - b.cpa)[0];
-  
-  recommendations.push({
-    type: 'channel',
-    priority: 'medium',
-    title: `Focus on ${bestChannel[0].charAt(0).toUpperCase() + bestChannel[0].slice(1)}`,
-    description: `${bestChannel[0]} is your best performing channel with lowest CPA. Consider reallocating budget here.`,
-    icon: Zap,
-    color: 'blue',
-    action: `Shift 15% more budget to ${bestChannel[0]}`
-  });
-
-  // Profit Margin Analysis
-  if (mockAnalysis.profitMargin > 25) {
-    recommendations.push({
-      type: 'growth',
-      priority: 'medium',
-      title: 'Strong Margins - Test New Channels',
-      description: 'Healthy profit margins provide room for testing new advertising channels or markets.',
-      icon: Lightbulb,
-      color: 'purple',
-      action: 'Test Reddit or TikTok advertising'
-    });
-  } else if (mockAnalysis.profitMargin < 15) {
-    recommendations.push({
-      type: 'margins',
-      priority: 'high',
-      title: 'Review Cost Structure',
-      description: 'Profit margins are concerning. Review product costs, shipping, and operational expenses.',
-      icon: AlertTriangle,
-      color: 'orange',
-      action: 'Audit all costs and pricing strategy'
-    });
-  }
-
-  // Seasonal Trends
-  recommendations.push({
-    type: 'seasonal',
-    priority: 'low',
-    title: 'Seasonal Trend Detected',
-    description: `Performance typically ${mockAnalysis.seasonalTrend} during this period. Plan inventory and budget accordingly.`,
-    icon: TrendingUp,
-    color: 'teal',
-    action: 'Adjust Q3 budget planning'
-  });
-
-  return recommendations;
-};
-
-const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProps) => {
-  const recommendations = generateRecommendations(productId);
+  const recommendations = generateRecommendations();
 
   const getIconColor = (color: string) => {
     const colors = {
@@ -133,15 +151,57 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
     }
   };
 
+  // Generate real quick wins based on actual data
+  const generateQuickWins = () => {
+    if (!isDataLoaded || !productId) {
+      return [];
+    }
+
+    const productData = getProductData(productId);
+    const filteredData = productData.filter(item => {
+      return item.month >= timeFrame.start && item.month <= timeFrame.end;
+    });
+
+    if (filteredData.length === 0) {
+      return ['No data available for selected time period'];
+    }
+
+    const quickWins = [];
+    const avgThirdPartyCosts = filteredData.reduce((sum, item) => sum + item.thirdPartyCosts, 0) / filteredData.length;
+    const avgAdSpend = filteredData.reduce((sum, item) => sum + item.adSpend, 0) / filteredData.length;
+    
+    if (avgThirdPartyCosts < avgAdSpend * 0.3) {
+      quickWins.push(`Third-party costs are relatively low (avg $${avgThirdPartyCosts.toFixed(0)}) - good cost management`);
+    }
+
+    // Find best performing month
+    if (filteredData.length > 1) {
+      const bestMonth = filteredData.reduce((best, current) => 
+        current.revenue > best.revenue ? current : best
+      );
+      quickWins.push(`${bestMonth.month} was your best month with $${bestMonth.revenue.toLocaleString()} revenue - analyze this period`);
+    }
+
+    // Check for consistent order volume
+    const avgOrders = filteredData.reduce((sum, item) => sum + item.orders, 0) / filteredData.length;
+    if (avgOrders > 0) {
+      quickWins.push(`Average ${Math.round(avgOrders)} orders per month shows consistent demand`);
+    }
+
+    return quickWins.length > 0 ? quickWins : ['Continue monitoring performance for optimization opportunities'];
+  };
+
+  const quickWins = generateQuickWins();
+
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
       <CardHeader>
         <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
           <Lightbulb className="w-6 h-6 text-yellow-600" />
-          AI-Powered Recommendations
+          Data-Driven Recommendations
         </CardTitle>
         <p className="text-sm text-gray-600">
-          Based on your product's performance data and market trends
+          Based on your product's actual performance data from {timeFrame.start} to {timeFrame.end}
         </p>
       </CardHeader>
       <CardContent>
@@ -176,9 +236,9 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
             <h4 className="font-semibold text-gray-900">Quick Win Opportunities</h4>
           </div>
           <ul className="text-sm text-gray-700 space-y-1">
-            <li>• Email marketing shows lowest CPA - increase email campaigns</li>
-            <li>• March consistently outperforms - replicate March strategies</li>
-            <li>• Mobile conversion rate could be improved - test mobile-optimized landing pages</li>
+            {quickWins.map((win, index) => (
+              <li key={index}>• {win}</li>
+            ))}
           </ul>
         </div>
       </CardContent>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calendar, DollarSign, ShoppingCart, Target } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calendar, DollarSign, ShoppingCart, Target, RefreshCw } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
 import MetricsCards from '@/components/MetricsCards';
 import TrendChart from '@/components/TrendChart';
@@ -16,12 +16,27 @@ import { useData } from '@/contexts/DataContext';
 
 const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
-  const [timeFrame, setTimeFrame] = useState<{ start: string; end: string }>({
+  const [pendingTimeFrame, setPendingTimeFrame] = useState<{ start: string; end: string }>({
     start: '2024-01',
     end: '2025-06'
   });
-  const [analysisType, setAnalysisType] = useState<'summary' | 'detailed'>('summary');
+  const [appliedTimeFrame, setAppliedTimeFrame] = useState<{ start: string; end: string }>({
+    start: '2024-01',
+    end: '2025-06'
+  });
+  const [pendingAnalysisType, setPendingAnalysisType] = useState<'summary' | 'detailed'>('summary');
+  const [appliedAnalysisType, setAppliedAnalysisType] = useState<'summary' | 'detailed'>('summary');
   const { isDataLoaded } = useData();
+
+  const hasUnappliedChanges = 
+    pendingTimeFrame.start !== appliedTimeFrame.start || 
+    pendingTimeFrame.end !== appliedTimeFrame.end ||
+    pendingAnalysisType !== appliedAnalysisType;
+
+  const handleApplyAnalysis = () => {
+    setAppliedTimeFrame(pendingTimeFrame);
+    setAppliedAnalysisType(pendingAnalysisType);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -41,7 +56,7 @@ const Index = () => {
             <div className="flex items-center gap-4">
               <Badge variant="outline" className="px-3 py-1">
                 <Calendar className="w-4 h-4 mr-2" />
-                {timeFrame.start} to {timeFrame.end}
+                {appliedTimeFrame.start} to {appliedTimeFrame.end}
               </Badge>
             </div>
           </div>
@@ -78,13 +93,13 @@ const Index = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Start Date</label>
                   <Input
                     type="month"
-                    value={timeFrame.start}
-                    onChange={(e) => setTimeFrame(prev => ({ ...prev, start: e.target.value }))}
+                    value={pendingTimeFrame.start}
+                    onChange={(e) => setPendingTimeFrame(prev => ({ ...prev, start: e.target.value }))}
                     className="w-full"
                   />
                 </div>
@@ -93,8 +108,8 @@ const Index = () => {
                   <label className="text-sm font-medium text-gray-700">End Date</label>
                   <Input
                     type="month"
-                    value={timeFrame.end}
-                    onChange={(e) => setTimeFrame(prev => ({ ...prev, end: e.target.value }))}
+                    value={pendingTimeFrame.end}
+                    onChange={(e) => setPendingTimeFrame(prev => ({ ...prev, end: e.target.value }))}
                     className="w-full"
                   />
                 </div>
@@ -102,8 +117,8 @@ const Index = () => {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Analysis Type</label>
                   <Select 
-                    value={analysisType} 
-                    onValueChange={(value: 'summary' | 'detailed') => setAnalysisType(value)}
+                    value={pendingAnalysisType} 
+                    onValueChange={(value: 'summary' | 'detailed') => setPendingAnalysisType(value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -115,6 +130,25 @@ const Index = () => {
                   </Select>
                 </div>
               </div>
+              
+              {/* Apply Button */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {hasUnappliedChanges && (
+                    <Badge variant="secondary" className="text-xs">
+                      Changes pending
+                    </Badge>
+                  )}
+                </div>
+                <Button 
+                  onClick={handleApplyAnalysis}
+                  disabled={!hasUnappliedChanges}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Apply Analysis
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -124,35 +158,35 @@ const Index = () => {
             {/* Key Metrics Cards */}
             <MetricsCards 
               productId={selectedProduct} 
-              timeFrame={timeFrame}
+              timeFrame={appliedTimeFrame}
             />
 
             {/* Charts and Analysis */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <TrendChart 
                 productId={selectedProduct} 
-                timeFrame={timeFrame}
+                timeFrame={appliedTimeFrame}
                 metric="revenue"
               />
               <TrendChart 
                 productId={selectedProduct} 
-                timeFrame={timeFrame}
+                timeFrame={appliedTimeFrame}
                 metric="cpa"
               />
             </div>
 
             {/* Performance Table */}
-            {analysisType === 'detailed' && (
+            {appliedAnalysisType === 'detailed' && (
               <PerformanceTable 
                 productId={selectedProduct} 
-                timeFrame={timeFrame}
+                timeFrame={appliedTimeFrame}
               />
             )}
 
             {/* Recommendations */}
             <RecommendationsPanel 
               productId={selectedProduct} 
-              timeFrame={timeFrame}
+              timeFrame={appliedTimeFrame}
             />
           </>
         )}

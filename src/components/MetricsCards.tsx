@@ -13,6 +13,11 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
   const { getProductData, isDataLoaded } = useData();
 
   const calculateMetrics = () => {
+    console.log('=== MetricsCards Debug ===');
+    console.log('Product ID:', productId);
+    console.log('Time Frame:', timeFrame);
+    console.log('Is Data Loaded:', isDataLoaded);
+
     if (!isDataLoaded || !productId) {
       return {
         totalRevenue: 0,
@@ -28,21 +33,42 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
     }
 
     const productData = getProductData(productId);
+    console.log('Raw product data length:', productData.length);
     
-    const totalRevenue = productData.reduce((sum, item) => sum + item.revenue, 0);
-    const totalAdSpend = productData.reduce((sum, item) => sum + item.adSpend, 0);
-    const totalNonAdCosts = productData.reduce((sum, item) => sum + item.nonAdCosts, 0);
-    const totalThirdPartyCosts = productData.reduce((sum, item) => sum + item.thirdPartyCosts, 0);
+    // Filter data by time frame
+    const filteredData = productData.filter(item => {
+      const itemMonth = item.month;
+      const inRange = itemMonth >= timeFrame.start && itemMonth <= timeFrame.end;
+      console.log(`Month ${itemMonth}: in range ${timeFrame.start} to ${timeFrame.end}? ${inRange}`);
+      return inRange;
+    });
+    
+    console.log('Filtered data length:', filteredData.length);
+    console.log('Filtered data sample:', filteredData.slice(0, 2));
+    
+    const totalRevenue = filteredData.reduce((sum, item) => sum + (item.revenue || 0), 0);
+    const totalAdSpend = filteredData.reduce((sum, item) => sum + (item.adSpend || 0), 0);
+    const totalNonAdCosts = filteredData.reduce((sum, item) => sum + (item.nonAdCosts || 0), 0);
+    const totalThirdPartyCosts = filteredData.reduce((sum, item) => sum + (item.thirdPartyCosts || 0), 0);
     const totalCosts = totalAdSpend + totalNonAdCosts + totalThirdPartyCosts;
-    const totalOrders = productData.reduce((sum, item) => sum + item.orders, 0);
+    const totalOrders = filteredData.reduce((sum, item) => sum + (item.orders || 0), 0);
+    
+    console.log('Calculated values:', {
+      totalRevenue,
+      totalAdSpend,
+      totalOrders,
+      totalThirdPartyCosts
+    });
     
     const profit = totalRevenue - totalCosts;
     const profitMargin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
     const avgCPA = totalOrders > 0 ? totalAdSpend / totalOrders : 0;
     const avgSale = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
+    console.log('Final CPA calculation:', { totalAdSpend, totalOrders, avgCPA });
+    
     // Calculate growth (compare last two months if available)
-    const sortedData = productData.sort((a, b) => a.month.localeCompare(b.month));
+    const sortedData = filteredData.sort((a, b) => a.month.localeCompare(b.month));
     let monthlyGrowth = 0;
     if (sortedData.length >= 2) {
       const lastMonth = sortedData[sortedData.length - 1].revenue;
@@ -175,15 +201,23 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-gray-900 mb-2">
-            {formatCurrency(metrics.avgCPA)}
+            {metrics.avgCPA > 0 ? formatCurrency(metrics.avgCPA) : 'No Data'}
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant={metrics.avgCPA < metrics.avgSale ? 'default' : 'destructive'} className="text-xs">
-              {metrics.avgCPA < metrics.avgSale ? '✅ Healthy' : '⚠️ High'}
-            </Badge>
-            <span className="text-xs text-gray-500">
-              vs {formatCurrency(metrics.avgSale)} avg sale
-            </span>
+            {metrics.avgCPA > 0 && metrics.avgSale > 0 ? (
+              <>
+                <Badge variant={metrics.avgCPA < metrics.avgSale ? 'default' : 'destructive'} className="text-xs">
+                  {metrics.avgCPA < metrics.avgSale ? '✅ Healthy' : '⚠️ High'}
+                </Badge>
+                <span className="text-xs text-gray-500">
+                  vs {formatCurrency(metrics.avgSale)} avg sale
+                </span>
+              </>
+            ) : (
+              <span className="text-xs text-gray-500">
+                {metrics.totalOrders === 0 ? 'No orders in period' : 'No ad spend data'}
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
