@@ -23,24 +23,46 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
   const issues: string[] = [];
   let skippedRows = 0;
 
-  // Check which columns we can detect
+  // Check which columns we can detect with improved matching
   const detectedColumns: string[] = [];
   const missingColumns: string[] = [];
   
   Object.entries(columnMappings).forEach(([key, variations]) => {
-    const found = variations.some(variation => 
-      headers.some(header => header.toLowerCase().includes(variation.toLowerCase()) || 
-                           variation.toLowerCase().includes(header.toLowerCase()))
-    );
+    console.log(`Checking for ${key} column with variations:`, variations);
+    
+    const found = variations.some(variation => {
+      const match = headers.some(header => {
+        const headerLower = header.toLowerCase().trim();
+        const variationLower = variation.toLowerCase().trim();
+        
+        // Exact match
+        if (headerLower === variationLower) {
+          console.log(`✓ Exact match found for ${key}: "${header}" matches "${variation}"`);
+          return true;
+        }
+        
+        // Contains match
+        if (headerLower.includes(variationLower) || variationLower.includes(headerLower)) {
+          console.log(`✓ Contains match found for ${key}: "${header}" contains/matches "${variation}"`);
+          return true;
+        }
+        
+        return false;
+      });
+      return match;
+    });
+    
     if (found) {
       detectedColumns.push(key);
+      console.log(`✓ ${key} column detected`);
     } else {
       missingColumns.push(key);
+      console.log(`✗ ${key} column NOT detected`);
     }
   });
 
-  console.log('Detected columns:', detectedColumns);
-  console.log('Missing columns:', missingColumns);
+  console.log('Final detected columns:', detectedColumns);
+  console.log('Final missing columns:', missingColumns);
   
   data.forEach((row, index) => {
     try {
@@ -56,7 +78,7 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
       const thirdPartyCosts = getColumnValue(row, columnMappings.thirdPartyCosts);
       const orders = getColumnValue(row, columnMappings.orders);
 
-      console.log(`Row ${index} extracted values:`, { id, name, revenue, orders });
+      console.log(`Row ${index} extracted values:`, { id, name, revenue, orders, thirdPartyCosts });
 
       // More flexible validation - only require essential fields
       if (!name || name.toString().trim() === '') {

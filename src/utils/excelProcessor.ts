@@ -22,7 +22,11 @@ export const columnMappings = {
   revenue: ['Revenue', 'revenue', 'REVENUE', 'Sales', 'sales', 'Total Revenue', 'total revenue'],
   adSpend: ['Ad Spend', 'ad spend', 'adspend', 'AdSpend', 'Ad_Spend', 'Advertising Spend', 'PPC Spend'],
   nonAdCosts: ['Non-Ad Costs', 'non ad costs', 'nonAdCosts', 'Non_Ad_Costs', 'Other Costs', 'Operating Costs'],
-  thirdPartyCosts: ['Third Party Costs', 'third party costs', 'thirdPartyCosts', 'Third_Party_Costs', 'External Costs'],
+  thirdPartyCosts: [
+    'Third Party Costs', 'third party costs', 'thirdPartyCosts', 'Third_Party_Costs', 'External Costs',
+    '3rd Party Costs', '3rd party costs', '3rdPartyCosts', '3rd_Party_Costs', '3rd_party_costs',
+    'Third-Party Costs', '3rd-Party Costs', 'third-party costs', '3rd-party costs'
+  ],
   orders: ['Orders', 'orders', 'ORDERS', 'Order Count', 'order count', 'Total Orders']
 };
 
