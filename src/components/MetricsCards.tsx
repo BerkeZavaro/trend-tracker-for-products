@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, ShoppingCart, Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -11,6 +10,35 @@ interface MetricsCardsProps {
 
 const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
   const { getProductData, isDataLoaded } = useData();
+
+  // Helper function to parse date strings and compare them properly
+  const isDateInRange = (itemMonth: string, startDate: string, endDate: string) => {
+    console.log('=== Date Comparison Debug ===');
+    console.log('Item month:', itemMonth, 'Start:', startDate, 'End:', endDate);
+    
+    // Handle numeric months (1-12) by converting to YYYY-MM format
+    // Assume data is from 2024-2025 range for now
+    let parsedItemDate = '';
+    
+    if (itemMonth.match(/^\d{1,2}$/)) {
+      // Numeric month like "1", "10", "11"
+      const monthNum = parseInt(itemMonth);
+      // Assume months 1-6 are 2025, 7-12 are 2024 (adjust as needed)
+      const year = monthNum <= 6 ? 2025 : 2024;
+      parsedItemDate = `${year}-${monthNum.toString().padStart(2, '0')}`;
+    } else if (itemMonth.match(/^\d{4}-\d{2}$/)) {
+      // Already in YYYY-MM format
+      parsedItemDate = itemMonth;
+    } else {
+      console.warn('Unrecognized date format:', itemMonth);
+      return false;
+    }
+    
+    console.log('Parsed item date:', parsedItemDate);
+    const inRange = parsedItemDate >= startDate && parsedItemDate <= endDate;
+    console.log('In range?', inRange);
+    return inRange;
+  };
 
   const calculateMetrics = () => {
     console.log('=== MetricsCards Debug ===');
@@ -34,13 +62,11 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
 
     const productData = getProductData(productId);
     console.log('Raw product data length:', productData.length);
+    console.log('Sample raw data:', productData.slice(0, 3));
     
-    // Filter data by time frame
+    // Filter data by time frame using proper date comparison
     const filteredData = productData.filter(item => {
-      const itemMonth = item.month;
-      const inRange = itemMonth >= timeFrame.start && itemMonth <= timeFrame.end;
-      console.log(`Month ${itemMonth}: in range ${timeFrame.start} to ${timeFrame.end}? ${inRange}`);
-      return inRange;
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end);
     });
     
     console.log('Filtered data length:', filteredData.length);
@@ -68,7 +94,12 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
     console.log('Final CPA calculation:', { totalAdSpend, totalOrders, avgCPA });
     
     // Calculate growth (compare last two months if available)
-    const sortedData = filteredData.sort((a, b) => a.month.localeCompare(b.month));
+    const sortedData = filteredData.sort((a, b) => {
+      const aDate = isDateInRange(a.month, '2024-01', '2025-12') ? a.month : '2024-01';
+      const bDate = isDateInRange(b.month, '2024-01', '2025-12') ? b.month : '2024-01';
+      return aDate.localeCompare(bDate);
+    });
+    
     let monthlyGrowth = 0;
     if (sortedData.length >= 2) {
       const lastMonth = sortedData[sortedData.length - 1].revenue;

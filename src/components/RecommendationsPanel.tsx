@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,29 @@ interface RecommendationsPanelProps {
 const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProps) => {
   const { getProductData, isDataLoaded } = useData();
 
+  // Helper function to parse date strings and compare them properly
+  const isDateInRange = (itemMonth: string, startDate: string, endDate: string) => {
+    // Handle numeric months (1-12) by converting to YYYY-MM format
+    // Assume data is from 2024-2025 range for now
+    let parsedItemDate = '';
+    
+    if (itemMonth.match(/^\d{1,2}$/)) {
+      // Numeric month like "1", "10", "11"
+      const monthNum = parseInt(itemMonth);
+      // Assume months 1-6 are 2025, 7-12 are 2024 (adjust as needed)
+      const year = monthNum <= 6 ? 2025 : 2024;
+      parsedItemDate = `${year}-${monthNum.toString().padStart(2, '0')}`;
+    } else if (itemMonth.match(/^\d{4}-\d{2}$/)) {
+      // Already in YYYY-MM format
+      parsedItemDate = itemMonth;
+    } else {
+      console.warn('Unrecognized date format:', itemMonth);
+      return false;
+    }
+    
+    return parsedItemDate >= startDate && parsedItemDate <= endDate;
+  };
+
   // Generate recommendations based on real data
   const generateRecommendations = () => {
     if (!isDataLoaded || !productId) {
@@ -21,9 +43,9 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
 
     const productData = getProductData(productId);
     
-    // Filter data by time frame
+    // Filter data by time frame using proper date comparison
     const filteredData = productData.filter(item => {
-      return item.month >= timeFrame.start && item.month <= timeFrame.end;
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end);
     });
 
     if (filteredData.length === 0) {
@@ -100,7 +122,11 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
 
     // Monthly Performance Analysis
     if (filteredData.length >= 2) {
-      const sortedData = filteredData.sort((a, b) => a.month.localeCompare(b.month));
+      const sortedData = filteredData.sort((a, b) => {
+        const aDate = isDateInRange(a.month, '2024-01', '2025-12') ? a.month : '2024-01';
+        const bDate = isDateInRange(b.month, '2024-01', '2025-12') ? b.month : '2024-01';
+        return aDate.localeCompare(bDate);
+      });
       const bestMonth = sortedData.reduce((best, current) => 
         current.revenue > best.revenue ? current : best
       );
@@ -113,7 +139,7 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
           type: 'seasonal',
           priority: 'medium',
           title: 'Performance Variation Detected',
-          description: `${bestMonth.month} was your best month ($${bestMonth.revenue.toLocaleString()}) vs ${worstMonth.month} ($${worstMonth.revenue.toLocaleString()}).`,
+          description: `Month ${bestMonth.month} was your best ($${bestMonth.revenue.toLocaleString()}) vs Month ${worstMonth.month} ($${worstMonth.revenue.toLocaleString()}).`,
           icon: TrendingUp,
           color: 'teal',
           action: 'Analyze what worked in top-performing months'
@@ -159,7 +185,7 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
 
     const productData = getProductData(productId);
     const filteredData = productData.filter(item => {
-      return item.month >= timeFrame.start && item.month <= timeFrame.end;
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end);
     });
 
     if (filteredData.length === 0) {
@@ -179,7 +205,7 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
       const bestMonth = filteredData.reduce((best, current) => 
         current.revenue > best.revenue ? current : best
       );
-      quickWins.push(`${bestMonth.month} was your best month with $${bestMonth.revenue.toLocaleString()} revenue - analyze this period`);
+      quickWins.push(`Month ${bestMonth.month} was your best with $${bestMonth.revenue.toLocaleString()} revenue - analyze this period`);
     }
 
     // Check for consistent order volume
