@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calendar, DollarSign, ShoppingCart, Target } from 'lucide-react';
-import ProductSearch from '@/components/ProductSearch';
+import ProductGrid from '@/components/ProductGrid';
 import MetricsCards from '@/components/MetricsCards';
 import TrendChart from '@/components/TrendChart';
 import PerformanceTable from '@/components/PerformanceTable';
@@ -52,76 +52,72 @@ const Index = () => {
         {/* Excel Upload Section */}
         <ExcelUpload />
 
-        {/* Search and Filter Section */}
+        {/* Product Selection Section */}
         <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
               <Search className="w-5 h-5" />
-              Product & Time Frame Selection
+              Product Selection
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <ProductSearch onProductSelect={setSelectedProduct} />
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Start Date</label>
-                <Input
-                  type="month"
-                  value={timeFrame.start}
-                  onChange={(e) => setTimeFrame(prev => ({ ...prev, start: e.target.value }))}
-                  className="w-full"
-                  disabled={!isDataLoaded}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">End Date</label>
-                <Input
-                  type="month"
-                  value={timeFrame.end}
-                  onChange={(e) => setTimeFrame(prev => ({ ...prev, end: e.target.value }))}
-                  className="w-full"
-                  disabled={!isDataLoaded}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Analysis Type</label>
-                <Select 
-                  value={analysisType} 
-                  onValueChange={(value: 'summary' | 'detailed') => setAnalysisType(value)}
-                  disabled={!isDataLoaded}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="summary">Summary</SelectItem>
-                    <SelectItem value="detailed">Detailed Breakdown</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {!isDataLoaded && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Upload Excel Data</h3>
-                <p className="text-blue-700 mb-4">
-                  Upload your Excel file above to begin analyzing product performance data.
-                </p>
-                <div className="text-sm text-blue-600 space-y-1">
-                  <p>📊 View profit/loss trends from your data</p>
-                  <p>📈 Compare month-over-month performance</p>
-                  <p>🎯 Get actionable recommendations</p>
-                </div>
-              </div>
-            )}
+            <ProductGrid 
+              onProductSelect={setSelectedProduct}
+              selectedProductId={selectedProduct}
+            />
           </CardContent>
         </Card>
+
+        {/* Time Frame and Analysis Type Section */}
+        {selectedProduct && isDataLoaded && (
+          <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Time Frame & Analysis Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Start Date</label>
+                  <Input
+                    type="month"
+                    value={timeFrame.start}
+                    onChange={(e) => setTimeFrame(prev => ({ ...prev, start: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">End Date</label>
+                  <Input
+                    type="month"
+                    value={timeFrame.end}
+                    onChange={(e) => setTimeFrame(prev => ({ ...prev, end: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Analysis Type</label>
+                  <Select 
+                    value={analysisType} 
+                    onValueChange={(value: 'summary' | 'detailed') => setAnalysisType(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="summary">Summary</SelectItem>
+                      <SelectItem value="detailed">Detailed Breakdown</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {selectedProduct && isDataLoaded && (
           <>
