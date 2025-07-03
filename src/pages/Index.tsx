@@ -11,6 +11,8 @@ import MetricsCards from '@/components/MetricsCards';
 import TrendChart from '@/components/TrendChart';
 import PerformanceTable from '@/components/PerformanceTable';
 import RecommendationsPanel from '@/components/RecommendationsPanel';
+import ExcelUpload from '@/components/ExcelUpload';
+import { useData } from '@/contexts/DataContext';
 
 const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -19,6 +21,7 @@ const Index = () => {
     end: '2025-06'
   });
   const [analysisType, setAnalysisType] = useState<'summary' | 'detailed'>('summary');
+  const { isDataLoaded } = useData();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -46,6 +49,9 @@ const Index = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Excel Upload Section */}
+        <ExcelUpload />
+
         {/* Search and Filter Section */}
         <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur">
           <CardHeader className="pb-4">
@@ -65,6 +71,7 @@ const Index = () => {
                   value={timeFrame.start}
                   onChange={(e) => setTimeFrame(prev => ({ ...prev, start: e.target.value }))}
                   className="w-full"
+                  disabled={!isDataLoaded}
                 />
               </div>
               
@@ -75,12 +82,17 @@ const Index = () => {
                   value={timeFrame.end}
                   onChange={(e) => setTimeFrame(prev => ({ ...prev, end: e.target.value }))}
                   className="w-full"
+                  disabled={!isDataLoaded}
                 />
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Analysis Type</label>
-                <Select value={analysisType} onValueChange={(value: 'summary' | 'detailed') => setAnalysisType(value)}>
+                <Select 
+                  value={analysisType} 
+                  onValueChange={(value: 'summary' | 'detailed') => setAnalysisType(value)}
+                  disabled={!isDataLoaded}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -92,17 +104,17 @@ const Index = () => {
               </div>
             </div>
 
-            {!selectedProduct && (
+            {!isDataLoaded && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="w-8 h-8 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">Get Started</h3>
+                <h3 className="text-lg font-semibold text-blue-900 mb-2">Upload Excel Data</h3>
                 <p className="text-blue-700 mb-4">
-                  Select a product above to begin analyzing its performance data.
+                  Upload your Excel file above to begin analyzing product performance data.
                 </p>
                 <div className="text-sm text-blue-600 space-y-1">
-                  <p>📊 View profit/loss trends</p>
+                  <p>📊 View profit/loss trends from your data</p>
                   <p>📈 Compare month-over-month performance</p>
                   <p>🎯 Get actionable recommendations</p>
                 </div>
@@ -111,7 +123,7 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {selectedProduct && (
+        {selectedProduct && isDataLoaded && (
           <>
             {/* Key Metrics Cards */}
             <MetricsCards 

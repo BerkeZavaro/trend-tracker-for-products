@@ -5,15 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-
-// Mock product data - in real app, this would come from your API
-const mockProducts = [
-  { id: 'PROD001', name: 'Premium Protein Powder', category: 'Supplements', brand: 'NutriFit' },
-  { id: 'PROD002', name: 'Energy Boost Capsules', category: 'Supplements', brand: 'VitalMax' },
-  { id: 'PROD003', name: 'Recovery Drink Mix', category: 'Beverages', brand: 'RecoverPlus' },
-  { id: 'PROD004', name: 'Joint Support Formula', category: 'Health', brand: 'FlexiCare' },
-  { id: 'PROD005', name: 'Pre-Workout Blend', category: 'Supplements', brand: 'PowerUp' },
-];
+import { useData } from '@/contexts/DataContext';
 
 interface ProductSearchProps {
   onProductSelect: (productId: string) => void;
@@ -21,14 +13,27 @@ interface ProductSearchProps {
 
 const ProductSearch = ({ onProductSelect }: ProductSearchProps) => {
   const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<typeof mockProducts[0] | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const { getUniqueProducts, isDataLoaded } = useData();
 
-  const handleSelect = (product: typeof mockProducts[0]) => {
+  const products = isDataLoaded ? getUniqueProducts() : [];
+
+  const handleSelect = (product: any) => {
     setSelectedProduct(product);
     onProductSelect(product.id);
     setOpen(false);
   };
+
+  if (!isDataLoaded) {
+    return (
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">Select Product</label>
+        <div className="w-full p-3 border border-gray-200 rounded-md bg-gray-50 text-gray-500 text-center">
+          Upload Excel data first to select products
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -62,7 +67,7 @@ const ProductSearch = ({ onProductSelect }: ProductSearchProps) => {
             <CommandInput placeholder="Search by product name or ID..." />
             <CommandEmpty>No products found.</CommandEmpty>
             <CommandGroup>
-              {mockProducts.map((product) => (
+              {products.map((product) => (
                 <CommandItem
                   key={product.id}
                   onSelect={() => handleSelect(product)}

@@ -2,34 +2,68 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, ShoppingCart, Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useData } from '@/contexts/DataContext';
 
 interface MetricsCardsProps {
   productId: string;
   timeFrame: { start: string; end: string };
 }
 
-// Mock data calculation - replace with real data fetching
-const calculateMetrics = (productId: string, timeFrame: { start: string; end: string }) => {
-  // Simulate API call and calculations
-  return {
-    totalRevenue: 125840,
-    totalCosts: 89650,
-    profit: 36190,
-    profitMargin: 28.8,
-    totalOrders: 1247,
-    avgCPA: 71.9,
-    avgSale: 100.95,
-    trendDirection: 'up',
-    monthlyGrowth: 12.5,
-    bestMonth: 'March 2024',
-    worstMonth: 'January 2024',
-    isProfitable: true,
-    riskLevel: 'low'
-  };
-};
-
 const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
-  const metrics = calculateMetrics(productId, timeFrame);
+  const { getProductData, isDataLoaded } = useData();
+
+  const calculateMetrics = () => {
+    if (!isDataLoaded || !productId) {
+      return {
+        totalRevenue: 0,
+        totalCosts: 0,
+        profit: 0,
+        profitMargin: 0,
+        totalOrders: 0,
+        avgCPA: 0,
+        avgSale: 0,
+        monthlyGrowth: 0,
+        isProfitable: false
+      };
+    }
+
+    const productData = getProductData(productId);
+    
+    const totalRevenue = productData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalAdSpend = productData.reduce((sum, item) => sum + item.adSpend, 0);
+    const totalNonAdCosts = productData.reduce((sum, item) => sum + item.nonAdCosts, 0);
+    const totalThirdPartyCosts = productData.reduce((sum, item) => sum + item.thirdPartyCosts, 0);
+    const totalCosts = totalAdSpend + totalNonAdCosts + totalThirdPartyCosts;
+    const totalOrders = productData.reduce((sum, item) => sum + item.orders, 0);
+    
+    const profit = totalRevenue - totalCosts;
+    const profitMargin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
+    const avgCPA = totalOrders > 0 ? totalAdSpend / totalOrders : 0;
+    const avgSale = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    // Calculate growth (compare last two months if available)
+    const sortedData = productData.sort((a, b) => a.month.localeCompare(b.month));
+    let monthlyGrowth = 0;
+    if (sortedData.length >= 2) {
+      const lastMonth = sortedData[sortedData.length - 1].revenue;
+      const previousMonth = sortedData[sortedData.length - 2].revenue;
+      monthlyGrowth = previousMonth > 0 ? ((lastMonth - previousMonth) / previousMonth) * 100 : 0;
+    }
+
+    return {
+      totalRevenue,
+      totalCosts,
+      profit,
+      profitMargin,
+      totalOrders,
+      avgCPA,
+      avgSale,
+      monthlyGrowth,
+      isProfitable: profit > 0
+    };
+  };
+
+  const metrics = calculateMetrics();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -56,11 +90,17 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
             {formatCurrency(metrics.totalRevenue)}
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              +{metrics.monthlyGrowth}%
+            <Badge variant="secondary" className={`${
+              metrics.monthlyGrowth >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            } hover:bg-current`}>
+              {metrics.monthlyGrowth >= 0 ? (
+                <TrendingUp className="w-3 h-3 mr-1" />
+              ) : (
+                <TrendingDown className="w-3 h-3 mr-1" />
+              )}
+              {metrics.monthlyGrowth >= 0 ? '+' : ''}{metrics.monthlyGrowth.toFixed(1)}%
             </Badge>
-            <span className="text-xs text-gray-500">vs last period</span>
+            <span className="text-xs text-gray-500">vs last month</span>
           </div>
         </CardContent>
       </Card>
@@ -94,7 +134,7 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={metrics.isProfitable ? 'default' : 'destructive'} className="text-xs">
-              {metrics.profitMargin}% margin
+              {metrics.profitMargin.toFixed(1)}% margin
             </Badge>
             <span className="text-xs text-gray-500">
               {metrics.isProfitable ? '✅ Profitable' : '⚠️ Loss'}
