@@ -104,7 +104,7 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
       const bestMonth = sortedData.reduce((best, current) => 
         current.revenue > best.revenue ? current : best
       );
-      const worstMonth = sorteredData.reduce((worst, current) => 
+      const worstMonth = sortedData.reduce((worst, current) => 
         current.revenue < worst.revenue ? current : worst
       );
 
