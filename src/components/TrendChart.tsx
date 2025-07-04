@@ -15,12 +15,48 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   const { getProductData } = useData();
   const productData = getProductData(productId);
 
+  console.log('=== TrendChart Debug ===');
+  console.log('Product ID:', productId);
+  console.log('Time Frame:', timeFrame);
+  console.log('Metric:', metric);
+  console.log('Raw product data length:', productData.length);
+  console.log('Sample raw data:', productData.slice(0, 3));
+
   // Filter data for the selected time frame
   const filteredData = productData.filter(item => 
     isDateInRange(item.month, timeFrame.start, timeFrame.end)
   );
 
-  // Generate chart data with current and previous year comparison
+  console.log('Filtered data length:', filteredData.length);
+  console.log('Filtered data sample:', filteredData.slice(0, 2));
+
+  // Helper function to normalize date format to YYYY-MM
+  const normalizeDate = (month: string): string => {
+    if (month.match(/^\d{4}-\d{2}$/)) {
+      return month; // Already in YYYY-MM format
+    }
+    
+    if (month.match(/^\d{1,2}$/)) {
+      const monthNum = parseInt(month);
+      // Simple heuristic: assume months 1-6 are recent (2025), 7-12 are previous year (2024)
+      const year = monthNum <= 6 ? 2025 : 2024;
+      return `${year}-${monthNum.toString().padStart(2, '0')}`;
+    }
+    
+    return month;
+  };
+
+  // Create a lookup map for all data by normalized date
+  const dataByDate = new Map();
+  productData.forEach(item => {
+    const normalizedDate = normalizeDate(item.month);
+    dataByDate.set(normalizedDate, item);
+  });
+
+  console.log('Data by date map size:', dataByDate.size);
+  console.log('Available dates:', Array.from(dataByDate.keys()).sort());
+
+  // Generate chart data
   const generateChartData = () => {
     const chartData: Array<{
       month: string;
@@ -28,77 +64,43 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
       previousYear: number | null;
     }> = [];
 
-    // Sort filtered data by month
+    // Sort filtered data by normalized date
     const sortedData = [...filteredData].sort((a, b) => {
-      const aMonth = a.month.match(/^\d{1,2}$/) ? parseInt(a.month) : parseInt(a.month.split('-')[1]);
-      const bMonth = b.month.match(/^\d{1,2}$/) ? parseInt(b.month) : parseInt(b.month.split('-')[1]);
-      return aMonth - bMonth;
+      const aDate = normalizeDate(a.month);
+      const bDate = normalizeDate(b.month);
+      return aDate.localeCompare(bDate);
     });
 
+    console.log('Sorted data length:', sortedData.length);
+
     sortedData.forEach(item => {
+      const normalizedDate = normalizeDate(item.month);
+      const [year, month] = normalizedDate.split('-');
+      
+      // Create display label
+      const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { 
+        month: 'short', 
+        year: 'numeric' 
+      });
+
+      // Calculate current value
       let value = 0;
-      let monthLabel = '';
-
-      // Parse month for display
-      if (item.month.match(/^\d{1,2}$/)) {
-        const monthNum = parseInt(item.month);
-        const year = monthNum <= 6 ? 2025 : 2024;
-        monthLabel = new Date(year, monthNum - 1).toLocaleDateString('en-US', { 
-          month: 'short', 
-          year: 'numeric' 
-        });
-      } else {
-        const [year, month] = item.month.split('-');
-        monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { 
-          month: 'short', 
-          year: 'numeric' 
-        });
-      }
-
-      // Calculate metric value
       if (metric === 'revenue') {
         value = item.revenue || 0;
       } else {
-        // Calculate CPA: (adSpend + nonAdCosts + thirdPartyCosts) / orders
+        // Calculate CPA: total costs / orders
         const totalCosts = (item.adSpend || 0) + (item.nonAdCosts || 0) + (item.thirdPartyCosts || 0);
         value = item.orders > 0 ? totalCosts / item.orders : 0;
       }
 
-      // Find previous year data for comparison
-      let previousYearValue: number | null = null;
-      const currentMonth = item.month.match(/^\d{1,2}$/) ? parseInt(item.month) : parseInt(item.month.split('-')[1]);
-      
-      // Look for same month in previous year
-      const previousYearItem = productData.find(prevItem => {
-        const prevMonth = prevItem.month.match(/^\d{1,2}$/) ? parseInt(prevItem.month) : parseInt(prevItem.month.split('-')[1]);
-        
-        if (item.month.match(/^\d{1,2}$/)) {
-          // Current item is numeric month
-          const currentYear = currentMonth <= 6 ? 2025 : 2024;
-          const expectedPrevYear = currentYear - 1;
-          
-          if (prevItem.month.match(/^\d{1,2}$/)) {
-            const prevYear = prevMonth <= 6 ? 2025 : 2024;
-            return prevMonth === currentMonth && prevYear === expectedPrevYear;
-          } else {
-            const [prevYear] = prevItem.month.split('-');
-            return prevMonth === currentMonth && parseInt(prevYear) === expectedPrevYear;
-          }
-        } else {
-          // Current item is YYYY-MM format
-          const [currentYear] = item.month.split('-');
-          const expectedPrevYear = parseInt(currentYear) - 1;
-          
-          if (prevItem.month.match(/^\d{1,2}$/)) {
-            const prevYear = prevMonth <= 6 ? 2025 : 2024;
-            return prevMonth === currentMonth && prevYear === expectedPrevYear;
-          } else {
-            const [prevYear] = prevItem.month.split('-');
-            return prevMonth === currentMonth && parseInt(prevYear) === expectedPrevYear;
-          }
-        }
-      });
+      console.log(`Processing ${normalizedDate}: ${metric} = ${value}`);
 
+      // Find previous year data
+      const previousYear = parseInt(year) - 1;
+      const previousYearDate = `${previousYear}-${month}`;
+      const previousYearItem = dataByDate.get(previousYearDate);
+      
+      let previousYearValue: number | null = null;
       if (previousYearItem) {
         if (metric === 'revenue') {
           previousYearValue = previousYearItem.revenue || 0;
@@ -106,6 +108,9 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
           const prevTotalCosts = (previousYearItem.adSpend || 0) + (previousYearItem.nonAdCosts || 0) + (previousYearItem.thirdPartyCosts || 0);
           previousYearValue = previousYearItem.orders > 0 ? prevTotalCosts / previousYearItem.orders : 0;
         }
+        console.log(`Found previous year data for ${previousYearDate}: ${previousYearValue}`);
+      } else {
+        console.log(`No previous year data found for ${previousYearDate}`);
       }
 
       chartData.push({
@@ -115,12 +120,14 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
       });
     });
 
+    console.log('Final chart data:', chartData);
     return chartData;
   };
 
   const data = generateChartData();
   const isRevenue = metric === 'revenue';
   
+  // Calculate trend
   const currentValue = data[data.length - 1]?.value || 0;
   const previousValue = data[data.length - 2]?.value || 0;
   const trend = currentValue > previousValue ? 'up' : 'down';
@@ -146,7 +153,7 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
           <p className={`text-sm font-semibold ${isRevenue ? 'text-green-600' : 'text-blue-600'}`}>
             Current: {formatValue(payload[0].value)}
           </p>
-          {payload[1] && payload[1].value && (
+          {payload[1] && payload[1].value !== null && (
             <p className="text-sm text-gray-600">
               Previous Year: {formatValue(payload[1].value)}
             </p>
