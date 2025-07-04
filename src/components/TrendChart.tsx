@@ -1,9 +1,12 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
+import { normalizeDate, calculateTrend, formatValue } from '@/utils/chartUtils';
+import ChartTooltip from '@/components/chart/ChartTooltip';
+import TrendHeader from '@/components/chart/TrendHeader';
+import TrendLegend from '@/components/chart/TrendLegend';
 
 interface TrendChartProps {
   productId: string;
@@ -20,7 +23,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   console.log('Time Frame:', timeFrame);
   console.log('Metric:', metric);
   console.log('Raw product data length:', productData.length);
-  console.log('Sample raw data:', productData.slice(0, 3));
 
   // Filter data for the selected time frame
   const filteredData = productData.filter(item => 
@@ -28,23 +30,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   );
 
   console.log('Filtered data length:', filteredData.length);
-  console.log('Filtered data sample:', filteredData.slice(0, 2));
-
-  // Helper function to normalize date format to YYYY-MM
-  const normalizeDate = (month: string): string => {
-    if (month.match(/^\d{4}-\d{2}$/)) {
-      return month; // Already in YYYY-MM format
-    }
-    
-    if (month.match(/^\d{1,2}$/)) {
-      const monthNum = parseInt(month);
-      // Simple heuristic: assume months 1-6 are recent (2025), 7-12 are previous year (2024)
-      const year = monthNum <= 6 ? 2025 : 2024;
-      return `${year}-${monthNum.toString().padStart(2, '0')}`;
-    }
-    
-    return month;
-  };
 
   // Create a lookup map for all data by normalized date
   const dataByDate = new Map();
@@ -128,54 +113,20 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   const isRevenue = metric === 'revenue';
   
   // Calculate trend
-  const currentValue = data[data.length - 1]?.value || 0;
-  const previousValue = data[data.length - 2]?.value || 0;
-  const trend = currentValue > previousValue ? 'up' : 'down';
-  const trendPercent = previousValue > 0 ? Math.abs(((currentValue - previousValue) / previousValue) * 100) : 0;
-
-  const formatValue = (value: number) => {
-    if (isRevenue) {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(value);
-    }
-    return `$${value.toFixed(2)}`;
-  };
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
-          <p className={`text-sm font-semibold ${isRevenue ? 'text-green-600' : 'text-blue-600'}`}>
-            Current: {formatValue(payload[0].value)}
-          </p>
-          {payload[1] && payload[1].value !== null && (
-            <p className="text-sm text-gray-600">
-              Previous Year: {formatValue(payload[1].value)}
-            </p>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
+  const { trend, trendPercent } = calculateTrend(data);
 
   // Don't render if no data
   if (data.length === 0) {
     return (
       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
-            {isRevenue ? (
-              <DollarSign className="w-5 h-5 text-green-600" />
-            ) : (
-              <Target className="w-5 h-5 text-blue-600" />
-            )}
-            {isRevenue ? 'Revenue Trend' : 'CPA Trend'}
+          <CardTitle className="text-lg text-gray-800">
+            <TrendHeader 
+              isRevenue={isRevenue}
+              hasData={false}
+              trend={trend}
+              trendPercent={trendPercent}
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -190,31 +141,13 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg text-gray-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {isRevenue ? (
-              <DollarSign className="w-5 h-5 text-green-600" />
-            ) : (
-              <Target className="w-5 h-5 text-blue-600" />
-            )}
-            {isRevenue ? 'Revenue Trend' : 'CPA Trend'}
-          </div>
-          {data.length > 1 && (
-            <div className="flex items-center gap-2">
-              {trend === 'up' ? (
-                <TrendingUp className={`w-4 h-4 ${isRevenue ? 'text-green-600' : 'text-red-600'}`} />
-              ) : (
-                <TrendingDown className={`w-4 h-4 ${isRevenue ? 'text-red-600' : 'text-green-600'}`} />
-              )}
-              <span className={`text-sm font-medium ${
-                (isRevenue && trend === 'up') || (!isRevenue && trend === 'down') 
-                  ? 'text-green-600' 
-                  : 'text-red-600'
-              }`}>
-                {trendPercent.toFixed(1)}%
-              </span>
-            </div>
-          )}
+        <CardTitle className="text-lg text-gray-800">
+          <TrendHeader 
+            isRevenue={isRevenue}
+            hasData={data.length > 1}
+            trend={trend}
+            trendPercent={trendPercent}
+          />
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -239,9 +172,9 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
               <YAxis 
                 tick={{ fontSize: 12 }}
                 stroke="#6b7280"
-                tickFormatter={formatValue}
+                tickFormatter={(value) => formatValue(value, isRevenue)}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<ChartTooltip isRevenue={isRevenue} />} />
               <Area
                 type="monotone"
                 dataKey="value"
@@ -260,16 +193,7 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 text-xs text-gray-500 flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${isRevenue ? 'bg-green-500' : 'bg-blue-500'}`} />
-            Current Year
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-gray-400" />
-            Previous Year (Comparison)
-          </div>
-        </div>
+        <TrendLegend isRevenue={isRevenue} />
       </CardContent>
     </Card>
   );
