@@ -1,3 +1,4 @@
+
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 
@@ -5,11 +6,6 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
   const { getProductData, isDataLoaded, uploadedData } = useData();
 
   const calculateMetrics = () => {
-    console.log('=== MetricsCards Debug ===');
-    console.log('Product ID:', productId);
-    console.log('Time Frame:', timeFrame);
-    console.log('Is Data Loaded:', isDataLoaded);
-
     if (!isDataLoaded || !productId) {
       return {
         totalRevenue: 0,
@@ -25,16 +21,11 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
     }
 
     const productData = getProductData(productId);
-    console.log('Raw product data length:', productData.length);
-    console.log('Sample raw data:', productData.slice(0, 3));
     
     // Filter data by time frame using enhanced date comparison
     const filteredData = productData.filter(item => {
       return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
-    
-    console.log('Filtered data length:', filteredData.length);
-    console.log('Filtered data sample:', filteredData.slice(0, 2));
     
     const totalRevenue = filteredData.reduce((sum, item) => sum + (item.revenue || 0), 0);
     const totalAdSpend = filteredData.reduce((sum, item) => sum + (item.adSpend || 0), 0);
@@ -43,19 +34,10 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
     const totalCosts = totalAdSpend + totalNonAdCosts + totalThirdPartyCosts;
     const totalOrders = filteredData.reduce((sum, item) => sum + (item.orders || 0), 0);
     
-    console.log('Calculated values:', {
-      totalRevenue,
-      totalAdSpend,
-      totalOrders,
-      totalThirdPartyCosts
-    });
-    
     const profit = totalRevenue - totalCosts;
     const profitMargin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
     const avgCPA = totalOrders > 0 ? totalAdSpend / totalOrders : 0;
     const avgSale = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    
-    console.log('Final CPA calculation:', { totalAdSpend, totalOrders, avgCPA });
     
     // Calculate growth (compare last two months if available)
     const sortedData = filteredData.sort((a, b) => {

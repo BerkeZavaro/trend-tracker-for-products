@@ -5,15 +5,29 @@ import { analyzeDataDates } from './smartDateDetection';
 let cachedDateAnalysis: any = null;
 let cachedDataHash: string = '';
 
+// Lightweight hash generation - only use data length and sample items
 const generateDataHash = (data: ProductData[]): string => {
-  return data.map(item => `${item.id}-${item.month}`).join('|');
+  if (data.length === 0) return 'empty';
+  
+  // Use length + first/last items for lightweight hash
+  const sample = data.length > 2 ? 
+    `${data.length}-${data[0].id}-${data[data.length-1].id}` : 
+    `${data.length}-${data[0]?.id || 'none'}`;
+  
+  return sample;
+};
+
+// Clear all caches - called when new data is uploaded
+export const clearSessionCache = () => {
+  console.log('Clearing session cache');
+  cachedDateAnalysis = null;
+  cachedDataHash = '';
 };
 
 export const getDateAnalysis = (data: ProductData[]) => {
   const currentHash = generateDataHash(data);
   
   if (cachedDataHash !== currentHash || !cachedDateAnalysis) {
-    console.log('Performing fresh date analysis');
     cachedDateAnalysis = analyzeDataDates(data);
     cachedDataHash = currentHash;
   }
@@ -22,8 +36,6 @@ export const getDateAnalysis = (data: ProductData[]) => {
 };
 
 export const smartNormalizeDate = (month: string, allData: ProductData[]): string => {
-  console.log('Smart normalizing date:', month);
-  
   // Handle YYYY-MM format
   if (month.match(/^\d{4}-\d{2}$/)) {
     return month;
@@ -35,9 +47,7 @@ export const smartNormalizeDate = (month: string, allData: ProductData[]): strin
     const suggestedYear = analysis.suggestedYearMapping.get(month);
     
     if (suggestedYear) {
-      const normalized = `${suggestedYear}-${month.padStart(2, '0')}`;
-      console.log(`Smart normalized ${month} to ${normalized}`);
-      return normalized;
+      return `${suggestedYear}-${month.padStart(2, '0')}`;
     }
     
     // Fallback to current logic if no smart mapping available
@@ -51,13 +61,6 @@ export const smartNormalizeDate = (month: string, allData: ProductData[]): strin
 };
 
 export const isDateInRange = (itemMonth: string, startDate: string, endDate: string, allData: ProductData[] = []) => {
-  console.log('=== Enhanced Date Comparison Debug ===');
-  console.log('Item month:', itemMonth, 'Start:', startDate, 'End:', endDate);
-  
   const parsedItemDate = smartNormalizeDate(itemMonth, allData);
-  
-  console.log('Smart normalized date:', parsedItemDate);
-  const inRange = parsedItemDate >= startDate && parsedItemDate <= endDate;
-  console.log('In range?', inRange);
-  return inRange;
+  return parsedItemDate >= startDate && parsedItemDate <= endDate;
 };

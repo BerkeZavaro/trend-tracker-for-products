@@ -18,18 +18,10 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   const { getProductData, uploadedData } = useData();
   const productData = getProductData(productId);
 
-  console.log('=== TrendChart Debug ===');
-  console.log('Product ID:', productId);
-  console.log('Time Frame:', timeFrame);
-  console.log('Metric:', metric);
-  console.log('Raw product data length:', productData.length);
-
   // Filter data for the selected time frame using enhanced date logic
   const filteredData = productData.filter(item => 
     isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData)
   );
-
-  console.log('Filtered data length:', filteredData.length);
 
   // Create a lookup map for all data by normalized date
   const dataByDate = new Map();
@@ -37,9 +29,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
     const normalizedDate = normalizeDate(item.month, uploadedData);
     dataByDate.set(normalizedDate, item);
   });
-
-  console.log('Data by date map size:', dataByDate.size);
-  console.log('Available dates:', Array.from(dataByDate.keys()).sort());
 
   // Generate chart data
   const generateChartData = () => {
@@ -55,8 +44,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
       const bDate = normalizeDate(b.month, uploadedData);
       return aDate.localeCompare(bDate);
     });
-
-    console.log('Sorted data length:', sortedData.length);
 
     sortedData.forEach(item => {
       const normalizedDate = normalizeDate(item.month, uploadedData);
@@ -78,8 +65,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
         value = item.orders > 0 ? totalCosts / item.orders : 0;
       }
 
-      console.log(`Processing ${normalizedDate}: ${metric} = ${value}`);
-
       // Find previous year data
       const previousYear = parseInt(year) - 1;
       const previousYearDate = `${previousYear}-${month}`;
@@ -93,9 +78,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
           const prevTotalCosts = (previousYearItem.adSpend || 0) + (previousYearItem.nonAdCosts || 0) + (previousYearItem.thirdPartyCosts || 0);
           previousYearValue = previousYearItem.orders > 0 ? prevTotalCosts / previousYearItem.orders : 0;
         }
-        console.log(`Found previous year data for ${previousYearDate}: ${previousYearValue}`);
-      } else {
-        console.log(`No previous year data found for ${previousYearDate}`);
       }
 
       chartData.push({
@@ -105,7 +87,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
       });
     });
 
-    console.log('Final chart data:', chartData);
     return chartData;
   };
 

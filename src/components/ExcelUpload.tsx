@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +6,7 @@ import { useData, ProductData } from '@/contexts/DataContext';
 import { useToast } from '@/hooks/use-toast';
 import { processExcelFile } from '@/utils/excelProcessor';
 import { validateExcelData } from '@/utils/excelValidator';
+import { clearSessionCache } from '@/utils/enhancedDateUtils';
 import UploadArea from '@/components/excel/UploadArea';
 import FileStatus from '@/components/excel/FileStatus';
 import DataPreview from '@/components/excel/DataPreview';
@@ -27,7 +27,6 @@ const ExcelUpload = () => {
       const jsonData = await processExcelFile(file);
       const { validatedData, issues, columnInfo: colInfo } = validateExcelData(jsonData);
       
-      // Set preview data and column info
       setDataPreview(validatedData.slice(0, 5));
       setColumnInfo(colInfo);
       
@@ -35,7 +34,6 @@ const ExcelUpload = () => {
         throw new Error(`No valid data found. Issues: ${issues.join('; ')}`);
       }
 
-      console.log('Setting validated data:', validatedData.length, 'products');
       setUploadedData(validatedData);
       setUploadedFile(file);
       
@@ -43,10 +41,6 @@ const ExcelUpload = () => {
         title: "File uploaded successfully",
         description: `Processed ${validatedData.length} records from ${file.name}${issues.length > 0 ? '. Some issues detected - check preview.' : ''}`,
       });
-
-      if (issues.length > 0) {
-        console.warn('Upload issues:', issues);
-      }
 
     } catch (error) {
       console.error('Error processing file:', error);
@@ -94,6 +88,7 @@ const ExcelUpload = () => {
   };
 
   const removeFile = () => {
+    clearSessionCache();
     setUploadedFile(null);
     setUploadedData([]);
     setDataPreview([]);
