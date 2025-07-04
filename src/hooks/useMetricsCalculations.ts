@@ -1,9 +1,8 @@
-
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 
 export const useMetricsCalculations = (productId: string, timeFrame: { start: string; end: string }) => {
-  const { getProductData, isDataLoaded } = useData();
+  const { getProductData, isDataLoaded, uploadedData } = useData();
 
   const calculateMetrics = () => {
     console.log('=== MetricsCards Debug ===');
@@ -29,9 +28,9 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
     console.log('Raw product data length:', productData.length);
     console.log('Sample raw data:', productData.slice(0, 3));
     
-    // Filter data by time frame using proper date comparison
+    // Filter data by time frame using enhanced date comparison
     const filteredData = productData.filter(item => {
-      return isDateInRange(item.month, timeFrame.start, timeFrame.end);
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
     
     console.log('Filtered data length:', filteredData.length);
@@ -60,8 +59,8 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
     
     // Calculate growth (compare last two months if available)
     const sortedData = filteredData.sort((a, b) => {
-      const aDate = isDateInRange(a.month, '2024-01', '2025-12') ? a.month : '2024-01';
-      const bDate = isDateInRange(b.month, '2024-01', '2025-12') ? b.month : '2024-01';
+      const aDate = isDateInRange(a.month, '2024-01', '2025-12', uploadedData) ? a.month : '2024-01';
+      const bDate = isDateInRange(b.month, '2024-01', '2025-12', uploadedData) ? b.month : '2024-01';
       return aDate.localeCompare(bDate);
     });
     

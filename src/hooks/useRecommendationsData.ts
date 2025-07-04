@@ -1,10 +1,9 @@
-
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 import { AlertTriangle, TrendingUp, Target, Lightbulb } from 'lucide-react';
 
 export const useRecommendationsData = (productId: string, timeFrame: { start: string; end: string }) => {
-  const { getProductData, isDataLoaded } = useData();
+  const { getProductData, isDataLoaded, uploadedData } = useData();
 
   const generateRecommendations = () => {
     if (!isDataLoaded || !productId) {
@@ -13,9 +12,9 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
 
     const productData = getProductData(productId);
     
-    // Filter data by time frame using proper date comparison
+    // Filter data by time frame using enhanced date comparison
     const filteredData = productData.filter(item => {
-      return isDateInRange(item.month, timeFrame.start, timeFrame.end);
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
 
     if (filteredData.length === 0) {
@@ -93,8 +92,8 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
     // Monthly Performance Analysis
     if (filteredData.length >= 2) {
       const sortedData = filteredData.sort((a, b) => {
-        const aDate = isDateInRange(a.month, '2024-01', '2025-12') ? a.month : '2024-01';
-        const bDate = isDateInRange(b.month, '2024-01', '2025-12') ? b.month : '2024-01';
+        const aDate = isDateInRange(a.month, '2024-01', '2025-12', uploadedData) ? a.month : '2024-01';
+        const bDate = isDateInRange(b.month, '2024-01', '2025-12', uploadedData) ? b.month : '2024-01';
         return aDate.localeCompare(bDate);
       });
       const bestMonth = sortedData.reduce((best, current) => 
@@ -127,7 +126,7 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
 
     const productData = getProductData(productId);
     const filteredData = productData.filter(item => {
-      return isDateInRange(item.month, timeFrame.start, timeFrame.end);
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
 
     if (filteredData.length === 0) {

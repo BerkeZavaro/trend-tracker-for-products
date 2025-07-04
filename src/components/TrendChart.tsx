@@ -15,7 +15,7 @@ interface TrendChartProps {
 }
 
 const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
-  const { getProductData } = useData();
+  const { getProductData, uploadedData } = useData();
   const productData = getProductData(productId);
 
   console.log('=== TrendChart Debug ===');
@@ -24,9 +24,9 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   console.log('Metric:', metric);
   console.log('Raw product data length:', productData.length);
 
-  // Filter data for the selected time frame
+  // Filter data for the selected time frame using enhanced date logic
   const filteredData = productData.filter(item => 
-    isDateInRange(item.month, timeFrame.start, timeFrame.end)
+    isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData)
   );
 
   console.log('Filtered data length:', filteredData.length);
@@ -34,7 +34,7 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   // Create a lookup map for all data by normalized date
   const dataByDate = new Map();
   productData.forEach(item => {
-    const normalizedDate = normalizeDate(item.month);
+    const normalizedDate = normalizeDate(item.month, uploadedData);
     dataByDate.set(normalizedDate, item);
   });
 
@@ -51,15 +51,15 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
 
     // Sort filtered data by normalized date
     const sortedData = [...filteredData].sort((a, b) => {
-      const aDate = normalizeDate(a.month);
-      const bDate = normalizeDate(b.month);
+      const aDate = normalizeDate(a.month, uploadedData);
+      const bDate = normalizeDate(b.month, uploadedData);
       return aDate.localeCompare(bDate);
     });
 
     console.log('Sorted data length:', sortedData.length);
 
     sortedData.forEach(item => {
-      const normalizedDate = normalizeDate(item.month);
+      const normalizedDate = normalizeDate(item.month, uploadedData);
       const [year, month] = normalizedDate.split('-');
       
       // Create display label

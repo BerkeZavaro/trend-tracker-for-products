@@ -1,5 +1,13 @@
 
-export const normalizeDate = (month: string): string => {
+import { smartNormalizeDate } from './enhancedDateUtils';
+import { ProductData } from '@/contexts/DataContext';
+
+export const normalizeDate = (month: string, allData?: ProductData[]): string => {
+  if (allData && allData.length > 0) {
+    return smartNormalizeDate(month, allData);
+  }
+  
+  // Fallback to original logic when no data context available
   // Handle YYYY-MM format
   if (month.match(/^\d{4}-\d{2}$/)) {
     return month;
