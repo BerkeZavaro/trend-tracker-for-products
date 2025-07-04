@@ -2,6 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
+import { useData } from '@/contexts/DataContext';
+import { isDateInRange } from '@/utils/dateUtils';
 
 interface TrendChartProps {
   productId: string;
@@ -9,37 +11,120 @@ interface TrendChartProps {
   metric: 'revenue' | 'cpa';
 }
 
-// Mock data generation
-const generateMockData = (metric: 'revenue' | 'cpa') => {
-  const months = [
-    'Jan 2024', 'Feb 2024', 'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024',
-    'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024', 'Dec 2024',
-    'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025'
-  ];
-
-  if (metric === 'revenue') {
-    return months.map((month, index) => ({
-      month,
-      value: 8000 + Math.random() * 4000 + (index * 100),
-      previousYear: index >= 12 ? 7500 + Math.random() * 3500 + ((index - 12) * 80) : null
-    }));
-  } else {
-    return months.map((month, index) => ({
-      month,
-      value: 85 - (index * 0.8) + (Math.random() * 10 - 5),
-      previousYear: index >= 12 ? 88 - ((index - 12) * 0.6) + (Math.random() * 8 - 4) : null
-    }));
-  }
-};
-
 const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
-  const data = generateMockData(metric);
+  const { getProductData } = useData();
+  const productData = getProductData(productId);
+
+  // Filter data for the selected time frame
+  const filteredData = productData.filter(item => 
+    isDateInRange(item.month, timeFrame.start, timeFrame.end)
+  );
+
+  // Generate chart data with current and previous year comparison
+  const generateChartData = () => {
+    const chartData: Array<{
+      month: string;
+      value: number;
+      previousYear: number | null;
+    }> = [];
+
+    // Sort filtered data by month
+    const sortedData = [...filteredData].sort((a, b) => {
+      const aMonth = a.month.match(/^\d{1,2}$/) ? parseInt(a.month) : parseInt(a.month.split('-')[1]);
+      const bMonth = b.month.match(/^\d{1,2}$/) ? parseInt(b.month) : parseInt(b.month.split('-')[1]);
+      return aMonth - bMonth;
+    });
+
+    sortedData.forEach(item => {
+      let value = 0;
+      let monthLabel = '';
+
+      // Parse month for display
+      if (item.month.match(/^\d{1,2}$/)) {
+        const monthNum = parseInt(item.month);
+        const year = monthNum <= 6 ? 2025 : 2024;
+        monthLabel = new Date(year, monthNum - 1).toLocaleDateString('en-US', { 
+          month: 'short', 
+          year: 'numeric' 
+        });
+      } else {
+        const [year, month] = item.month.split('-');
+        monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { 
+          month: 'short', 
+          year: 'numeric' 
+        });
+      }
+
+      // Calculate metric value
+      if (metric === 'revenue') {
+        value = item.revenue || 0;
+      } else {
+        // Calculate CPA: (adSpend + nonAdCosts + thirdPartyCosts) / orders
+        const totalCosts = (item.adSpend || 0) + (item.nonAdCosts || 0) + (item.thirdPartyCosts || 0);
+        value = item.orders > 0 ? totalCosts / item.orders : 0;
+      }
+
+      // Find previous year data for comparison
+      let previousYearValue: number | null = null;
+      const currentMonth = item.month.match(/^\d{1,2}$/) ? parseInt(item.month) : parseInt(item.month.split('-')[1]);
+      
+      // Look for same month in previous year
+      const previousYearItem = productData.find(prevItem => {
+        const prevMonth = prevItem.month.match(/^\d{1,2}$/) ? parseInt(prevItem.month) : parseInt(prevItem.month.split('-')[1]);
+        
+        if (item.month.match(/^\d{1,2}$/)) {
+          // Current item is numeric month
+          const currentYear = currentMonth <= 6 ? 2025 : 2024;
+          const expectedPrevYear = currentYear - 1;
+          
+          if (prevItem.month.match(/^\d{1,2}$/)) {
+            const prevYear = prevMonth <= 6 ? 2025 : 2024;
+            return prevMonth === currentMonth && prevYear === expectedPrevYear;
+          } else {
+            const [prevYear] = prevItem.month.split('-');
+            return prevMonth === currentMonth && parseInt(prevYear) === expectedPrevYear;
+          }
+        } else {
+          // Current item is YYYY-MM format
+          const [currentYear] = item.month.split('-');
+          const expectedPrevYear = parseInt(currentYear) - 1;
+          
+          if (prevItem.month.match(/^\d{1,2}$/)) {
+            const prevYear = prevMonth <= 6 ? 2025 : 2024;
+            return prevMonth === currentMonth && prevYear === expectedPrevYear;
+          } else {
+            const [prevYear] = prevItem.month.split('-');
+            return prevMonth === currentMonth && parseInt(prevYear) === expectedPrevYear;
+          }
+        }
+      });
+
+      if (previousYearItem) {
+        if (metric === 'revenue') {
+          previousYearValue = previousYearItem.revenue || 0;
+        } else {
+          const prevTotalCosts = (previousYearItem.adSpend || 0) + (previousYearItem.nonAdCosts || 0) + (previousYearItem.thirdPartyCosts || 0);
+          previousYearValue = previousYearItem.orders > 0 ? prevTotalCosts / previousYearItem.orders : 0;
+        }
+      }
+
+      chartData.push({
+        month: monthLabel,
+        value,
+        previousYear: previousYearValue
+      });
+    });
+
+    return chartData;
+  };
+
+  const data = generateChartData();
   const isRevenue = metric === 'revenue';
   
   const currentValue = data[data.length - 1]?.value || 0;
   const previousValue = data[data.length - 2]?.value || 0;
   const trend = currentValue > previousValue ? 'up' : 'down';
-  const trendPercent = Math.abs(((currentValue - previousValue) / previousValue) * 100);
+  const trendPercent = previousValue > 0 ? Math.abs(((currentValue - previousValue) / previousValue) * 100) : 0;
 
   const formatValue = (value: number) => {
     if (isRevenue) {
@@ -61,7 +146,7 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
           <p className={`text-sm font-semibold ${isRevenue ? 'text-green-600' : 'text-blue-600'}`}>
             Current: {formatValue(payload[0].value)}
           </p>
-          {payload[1] && (
+          {payload[1] && payload[1].value && (
             <p className="text-sm text-gray-600">
               Previous Year: {formatValue(payload[1].value)}
             </p>
@@ -71,6 +156,29 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
     }
     return null;
   };
+
+  // Don't render if no data
+  if (data.length === 0) {
+    return (
+      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg text-gray-800 flex items-center gap-2">
+            {isRevenue ? (
+              <DollarSign className="w-5 h-5 text-green-600" />
+            ) : (
+              <Target className="w-5 h-5 text-blue-600" />
+            )}
+            {isRevenue ? 'Revenue Trend' : 'CPA Trend'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 flex items-center justify-center text-gray-500">
+            No data available for the selected time frame
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
@@ -84,20 +192,22 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
             )}
             {isRevenue ? 'Revenue Trend' : 'CPA Trend'}
           </div>
-          <div className="flex items-center gap-2">
-            {trend === 'up' ? (
-              <TrendingUp className={`w-4 h-4 ${isRevenue ? 'text-green-600' : 'text-red-600'}`} />
-            ) : (
-              <TrendingDown className={`w-4 h-4 ${isRevenue ? 'text-red-600' : 'text-green-600'}`} />
-            )}
-            <span className={`text-sm font-medium ${
-              (isRevenue && trend === 'up') || (!isRevenue && trend === 'down') 
-                ? 'text-green-600' 
-                : 'text-red-600'
-            }`}>
-              {trendPercent.toFixed(1)}%
-            </span>
-          </div>
+          {data.length > 1 && (
+            <div className="flex items-center gap-2">
+              {trend === 'up' ? (
+                <TrendingUp className={`w-4 h-4 ${isRevenue ? 'text-green-600' : 'text-red-600'}`} />
+              ) : (
+                <TrendingDown className={`w-4 h-4 ${isRevenue ? 'text-red-600' : 'text-green-600'}`} />
+              )}
+              <span className={`text-sm font-medium ${
+                (isRevenue && trend === 'up') || (!isRevenue && trend === 'down') 
+                  ? 'text-green-600' 
+                  : 'text-red-600'
+              }`}>
+                {trendPercent.toFixed(1)}%
+              </span>
+            </div>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
