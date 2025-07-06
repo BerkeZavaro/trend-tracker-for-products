@@ -12,6 +12,8 @@ export interface ProductData {
   nonAdCosts: number;
   thirdPartyCosts: number;
   orders: number;
+  cpa: number;
+  averageSale: number;
 }
 
 interface DataContextType {

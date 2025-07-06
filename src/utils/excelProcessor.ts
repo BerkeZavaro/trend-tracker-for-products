@@ -1,4 +1,3 @@
-
 import * as XLSX from 'xlsx';
 import { ProductData } from '@/contexts/DataContext';
 
@@ -27,7 +26,9 @@ export const columnMappings = {
     '3rd Party Costs', '3rd party costs', '3rdPartyCosts', '3rd_Party_Costs', '3rd_party_costs',
     'Third-Party Costs', '3rd-Party Costs', 'third-party costs', '3rd-party costs'
   ],
-  orders: ['Orders', 'orders', 'ORDERS', 'Order Count', 'order count', 'Total Orders']
+  orders: ['Orders', 'orders', 'ORDERS', 'Order Count', 'order count', 'Total Orders'],
+  cpa: ['CPA', 'cpa', 'Cost Per Acquisition', 'cost per acquisition', 'Cost_Per_Acquisition', 'COST PER ACQUISITION'],
+  averageSale: ['AVERAGE SALE', 'average sale', 'Average Sale', 'averageSale', 'Average_Sale', 'Avg Sale', 'avg sale', 'AVG SALE', 'Average Sale Value', 'Sale Value']
 };
 
 export const processExcelFile = async (file: File) => {

@@ -3,51 +3,54 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useData } from '@/contexts/DataContext';
+import { isDateInRange } from '@/utils/enhancedDateUtils';
 
 interface PerformanceTableProps {
   productId: string;
   timeFrame: { start: string; end: string };
 }
 
-// Mock detailed monthly data
-const generateDetailedData = () => {
-  const months = [
-    'Jan 2024', 'Feb 2024', 'Mar 2024', 'Apr 2024', 'May 2024', 'Jun 2024',
-    'Jul 2024', 'Aug 2024', 'Sep 2024', 'Oct 2024', 'Nov 2024', 'Dec 2024',
-    'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025'
-  ];
-
-  return months.map((month, index) => {
-    const revenue = 8000 + Math.random() * 4000 + (index * 100);
-    const adSpend = revenue * (0.3 + Math.random() * 0.2);
-    const nonAdCosts = revenue * (0.1 + Math.random() * 0.05);
-    const thirdPartyCosts = revenue * (0.05 + Math.random() * 0.03);
-    const totalCosts = adSpend + nonAdCosts + thirdPartyCosts;
-    const profit = revenue - totalCosts;
-    const orders = Math.floor(revenue / (80 + Math.random() * 40));
-    const cpa = adSpend / orders;
-    const avgSale = revenue / orders;
-
-    return {
-      month,
-      revenue,
-      adSpend,
-      nonAdCosts,
-      thirdPartyCosts,
-      totalCosts,
-      profit,
-      profitMargin: (profit / revenue) * 100,
-      orders,
-      cpa,
-      avgSale,
-      isProfitable: profit > 0,
-      performanceRating: profit > revenue * 0.2 ? 'excellent' : profit > 0 ? 'good' : 'poor'
-    };
-  });
-};
-
 const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
-  const data = generateDetailedData();
+  const { getProductData, isDataLoaded, uploadedData } = useData();
+
+  const getRealData = () => {
+    if (!isDataLoaded || !productId) {
+      return [];
+    }
+
+    const productData = getProductData(productId);
+    
+    // Filter data by time frame using enhanced date comparison
+    const filteredData = productData.filter(item => {
+      return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
+    });
+
+    // Process the real data to calculate derived metrics
+    return filteredData.map(item => {
+      const totalCosts = item.adSpend + item.nonAdCosts + item.thirdPartyCosts;
+      const profit = item.revenue - totalCosts;
+      const profitMargin = item.revenue > 0 ? (profit / item.revenue) * 100 : 0;
+
+      return {
+        month: item.month,
+        revenue: item.revenue,
+        adSpend: item.adSpend,
+        nonAdCosts: item.nonAdCosts,
+        thirdPartyCosts: item.thirdPartyCosts,
+        totalCosts,
+        profit,
+        profitMargin,
+        orders: item.orders,
+        cpa: item.cpa,
+        avgSale: item.averageSale,
+        isProfitable: profit > 0,
+        performanceRating: profit > item.revenue * 0.2 ? 'excellent' : profit > 0 ? 'good' : 'poor'
+      };
+    });
+  };
+
+  const data = getRealData();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -76,6 +79,32 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
       </Badge>;
     }
   };
+
+  if (!isDataLoaded) {
+    return (
+      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur mb-8">
+        <CardHeader>
+          <CardTitle className="text-xl text-gray-800">Monthly Performance Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500">Please upload Excel data to view performance metrics.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur mb-8">
+        <CardHeader>
+          <CardTitle className="text-xl text-gray-800">Monthly Performance Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-500">No data available for the selected product and time period.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur mb-8">

@@ -87,8 +87,10 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
       const nonAdCosts = getColumnValue(row, columnMappings.nonAdCosts);
       const thirdPartyCosts = getColumnValue(row, columnMappings.thirdPartyCosts);
       const orders = getColumnValue(row, columnMappings.orders);
+      const cpa = getColumnValue(row, columnMappings.cpa);
+      const averageSale = getColumnValue(row, columnMappings.averageSale);
 
-      console.log(`Row ${index} extracted values:`, { id, name, revenue, orders, month });
+      console.log(`Row ${index} extracted values:`, { id, name, revenue, orders, month, cpa, averageSale });
 
       // More flexible validation - only require essential fields
       if (!name || name.toString().trim() === '') {
@@ -107,6 +109,8 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
         nonAdCosts: nonAdCosts ? Number(nonAdCosts) || 0 : 0,
         thirdPartyCosts: thirdPartyCosts ? Number(thirdPartyCosts) || 0 : 0,
         orders: orders ? Number(orders) || 0 : 0,
+        cpa: cpa ? Number(cpa) || 0 : 0,
+        averageSale: averageSale ? Number(averageSale) || 0 : 0,
       };
 
       // Very basic validation - just check if we have a name
