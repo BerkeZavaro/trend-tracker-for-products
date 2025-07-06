@@ -62,6 +62,16 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
     }).format(amount);
   };
 
+  // New function to format currency with decimals for CPA, Adjusted CPA, and Average Sale
+  const formatCurrencyWithDecimals = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
   const getPerformanceBadge = (rating: string, isProfitable: boolean) => {
     if (rating === 'excellent') {
       return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -162,15 +172,15 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
                   <TableCell className={`text-right ${
                     row.cpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
                   }`}>
-                    {formatCurrency(row.cpa)}
+                    {formatCurrencyWithDecimals(row.cpa)}
                   </TableCell>
                   <TableCell className={`text-right ${
                     row.adjustedCpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
                   }`}>
-                    {formatCurrency(row.adjustedCpa)}
+                    {formatCurrencyWithDecimals(row.adjustedCpa)}
                   </TableCell>
                   <TableCell className="text-right text-gray-700">
-                    {formatCurrency(row.avgSale)}
+                    {formatCurrencyWithDecimals(row.avgSale)}
                   </TableCell>
                   <TableCell className="text-center">
                     {getPerformanceBadge(row.performanceRating, row.isProfitable)}
