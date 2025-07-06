@@ -14,6 +14,7 @@ export interface ProductData {
   orders: number;
   cpa: number;
   averageSale: number;
+  adjustedCpa: number;
 }
 
 interface DataContextType {

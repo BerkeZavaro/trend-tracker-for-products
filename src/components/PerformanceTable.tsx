@@ -43,6 +43,7 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
         profitMargin,
         orders: item.orders,
         cpa: item.cpa,
+        adjustedCpa: item.adjustedCpa,
         avgSale: item.averageSale,
         isProfitable: profit > 0,
         performanceRating: profit > item.revenue * 0.2 ? 'excellent' : profit > 0 ? 'good' : 'poor'
@@ -124,6 +125,7 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
                 <TableHead className="text-right">Margin</TableHead>
                 <TableHead className="text-right">Orders</TableHead>
                 <TableHead className="text-right">CPA</TableHead>
+                <TableHead className="text-right">Adjusted CPA</TableHead>
                 <TableHead className="text-right">Avg Sale</TableHead>
                 <TableHead className="text-center">Status</TableHead>
               </TableRow>
@@ -161,6 +163,11 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
                     row.cpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
                   }`}>
                     {formatCurrency(row.cpa)}
+                  </TableCell>
+                  <TableCell className={`text-right ${
+                    row.adjustedCpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
+                  }`}>
+                    {formatCurrency(row.adjustedCpa)}
                   </TableCell>
                   <TableCell className="text-right text-gray-700">
                     {formatCurrency(row.avgSale)}
