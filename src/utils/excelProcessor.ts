@@ -18,7 +18,7 @@ export const columnMappings = {
   name: ['Product Name', 'product name', 'name', 'Name', 'Product_Name', 'product_name', 'ProductName'],
   category: ['Category', 'category', 'CATEGORY', 'Product Category', 'product category'],
   brand: ['Brand', 'brand', 'BRAND', 'Product Brand', 'product brand'],
-  month: ['Month', 'month', 'MONTH', 'Date', 'date', 'Period', 'period'],
+  month: ['DATE', 'Date', 'date', 'Month', 'month', 'MONTH', 'Period', 'period'],
   revenue: ['Revenue', 'revenue', 'REVENUE', 'Sales', 'sales', 'Total Revenue', 'total revenue'],
   adSpend: ['Ad Spend', 'ad spend', 'adspend', 'AdSpend', 'Ad_Spend', 'Advertising Spend', 'PPC Spend'],
   nonAdCosts: ['Non-Ad Costs', 'non ad costs', 'nonAdCosts', 'Non_Ad_Costs', 'Other Costs', 'Operating Costs'],

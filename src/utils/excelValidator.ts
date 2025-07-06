@@ -23,6 +23,11 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
   const issues: string[] = [];
   let skippedRows = 0;
 
+  // Check if DATE column is present
+  const hasDateColumn = headers.some(header => 
+    header.toLowerCase().trim() === 'date'
+  );
+
   // Check which columns we can detect with improved matching
   const detectedColumns: string[] = [];
   const missingColumns: string[] = [];
@@ -64,6 +69,11 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
   console.log('Final detected columns:', detectedColumns);
   console.log('Final missing columns:', missingColumns);
   
+  // Add feedback about DATE column detection
+  if (hasDateColumn) {
+    issues.push('✓ DATE column detected - using combined date format for better accuracy');
+  }
+  
   data.forEach((row, index) => {
     try {
       // Extract values using flexible mapping
@@ -78,7 +88,7 @@ export const validateExcelData = (data: any[]): { validatedData: ProductData[], 
       const thirdPartyCosts = getColumnValue(row, columnMappings.thirdPartyCosts);
       const orders = getColumnValue(row, columnMappings.orders);
 
-      console.log(`Row ${index} extracted values:`, { id, name, revenue, orders, thirdPartyCosts });
+      console.log(`Row ${index} extracted values:`, { id, name, revenue, orders, month });
 
       // More flexible validation - only require essential fields
       if (!name || name.toString().trim() === '') {
