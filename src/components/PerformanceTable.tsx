@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -180,13 +179,13 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
 
   const getRowBackgroundClass = (rating: string, isProfitable: boolean) => {
     if (rating === 'excellent') {
-      return 'bg-green-50/30';
+      return 'bg-green-50/40 hover:bg-green-50/60';
     } else if (rating === 'good' && isProfitable) {
-      return 'bg-blue-50/30';
+      return 'bg-blue-50/40 hover:bg-blue-50/60';
     } else if (!isProfitable) {
-      return 'bg-red-50/50';
+      return 'bg-red-50/40 hover:bg-red-50/60';
     }
-    return '';
+    return 'hover:bg-gray-50/60';
   };
 
   if (!isDataLoaded) {
@@ -259,51 +258,42 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
 
                 return (
                   <TableRow key={index} className={rowBgClass}>
-                    <TableCell className="font-medium text-sm">
+                    <TableCell className="font-medium text-sm text-slate-800">
                       {row.month}
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-green-700">
+                    <TableCell className="text-right font-semibold text-slate-800">
                       <div>{formatCurrency(row.revenue)}</div>
                       {revenueChange && formatChangeIndicator(revenueChange.percentageChange)}
                     </TableCell>
-                    <TableCell className="text-right text-red-600">
+                    <TableCell className="text-right text-slate-700">
                       <div>{formatCurrency(row.adSpend)}</div>
                       {adSpendChange && formatChangeIndicator(adSpendChange.percentageChange)}
                     </TableCell>
-                    <TableCell className="text-right text-gray-700">
+                    <TableCell className="text-right text-slate-700">
                       <div>{formatCurrency(row.totalCosts)}</div>
                       {totalCostsChange && formatChangeIndicator(totalCostsChange.percentageChange)}
                     </TableCell>
-                    <TableCell className={`text-right font-semibold ${
-                      row.profit > 0 ? 'text-green-700' : 'text-red-700'
-                    }`}>
+                    <TableCell className="text-right font-semibold text-slate-800">
                       <div>{formatCurrency(row.profit)}</div>
                       {profitChange && formatChangeIndicator(profitChange.percentageChange)}
                     </TableCell>
-                    <TableCell className={`text-right font-medium ${
-                      row.profitMargin > 20 ? 'text-green-700' : 
-                      row.profitMargin > 0 ? 'text-blue-700' : 'text-red-700'
-                    }`}>
+                    <TableCell className="text-right font-medium text-slate-700">
                       <div>{row.profitMargin.toFixed(1)}%</div>
                       {marginChange && formatChangeIndicator(marginChange.percentageChange)}
                     </TableCell>
-                    <TableCell className="text-right text-gray-700">
+                    <TableCell className="text-right text-slate-700">
                       <div>{row.orders.toLocaleString()}</div>
                       {ordersChange && formatChangeIndicator(ordersChange.percentageChange)}
                     </TableCell>
-                    <TableCell className={`text-right ${
-                      row.cpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
-                    }`}>
+                    <TableCell className="text-right text-slate-600">
                       <div>{formatCurrencyWithDecimals(row.cpa)}</div>
                       {cpaChange && formatChangeIndicator(cpaChange.percentageChange)}
                     </TableCell>
-                    <TableCell className={`text-right ${
-                      row.adjustedCpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
-                    }`}>
+                    <TableCell className="text-right text-slate-600">
                       <div>{formatCurrencyWithDecimals(row.adjustedCpa)}</div>
                       {adjustedCpaChange && formatChangeIndicator(adjustedCpaChange.percentageChange)}
                     </TableCell>
-                    <TableCell className="text-right text-gray-700">
+                    <TableCell className="text-right text-slate-700">
                       <div>{formatCurrencyWithDecimals(row.avgSale)}</div>
                       {avgSaleChange && formatChangeIndicator(avgSaleChange.percentageChange)}
                     </TableCell>
