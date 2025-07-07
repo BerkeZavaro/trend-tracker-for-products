@@ -58,11 +58,11 @@ const PerformanceTableRow = ({ row, previousRow, index }: PerformanceTableRowPro
       </TableCell>
       <TableCell className="text-right text-slate-600">
         <div>{formatCurrencyWithDecimals(row.cpa)}</div>
-        {cpaChange && <ChangeIndicator percentageChange={cpaChange.percentageChange} />}
+        {cpaChange && <ChangeIndicator percentageChange={cpaChange.percentageChange} inverse={true} />}
       </TableCell>
       <TableCell className="text-right text-slate-600">
         <div>{formatCurrencyWithDecimals(row.adjustedCpa)}</div>
-        {adjustedCpaChange && <ChangeIndicator percentageChange={adjustedCpaChange.percentageChange} />}
+        {adjustedCpaChange && <ChangeIndicator percentageChange={adjustedCpaChange.percentageChange} inverse={true} />}
       </TableCell>
       <TableCell className="text-right text-slate-700">
         <div>{formatCurrencyWithDecimals(row.avgSale)}</div>

@@ -23,6 +23,14 @@ export const processPerformanceData = (productData: any[]) => {
     const profit = item.revenue - totalCosts;
     const profitMargin = item.revenue > 0 ? (profit / item.revenue) * 100 : 0;
 
+    // Updated rating logic based on new thresholds
+    let performanceRating = 'poor';
+    if (profitMargin >= 35) {
+      performanceRating = 'excellent';
+    } else if (profitMargin >= 25) {
+      performanceRating = 'good';
+    }
+
     return {
       month: item.month,
       revenue: item.revenue,
@@ -37,7 +45,7 @@ export const processPerformanceData = (productData: any[]) => {
       adjustedCpa: item.adjustedCpa,
       avgSale: item.averageSale,
       isProfitable: profit > 0,
-      performanceRating: profit > item.revenue * 0.2 ? 'excellent' : profit > 0 ? 'good' : 'poor'
+      performanceRating
     };
   });
 };

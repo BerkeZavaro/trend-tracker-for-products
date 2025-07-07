@@ -1,14 +1,18 @@
 
 interface ChangeIndicatorProps {
   percentageChange: number;
+  inverse?: boolean;
 }
 
-const ChangeIndicator = ({ percentageChange }: ChangeIndicatorProps) => {
+const ChangeIndicator = ({ percentageChange, inverse = false }: ChangeIndicatorProps) => {
   if (Math.abs(percentageChange) < 0.1) return null;
 
   const isPositive = percentageChange > 0;
   const arrow = isPositive ? '↑' : '↓';
-  const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+  
+  // When inverse is true, flip the color logic
+  const isGoodChange = inverse ? !isPositive : isPositive;
+  const colorClass = isGoodChange ? 'text-green-600' : 'text-red-600';
   
   const formattedPercentage = `${Math.abs(percentageChange).toFixed(1)}%`;
 
