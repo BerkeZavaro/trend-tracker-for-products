@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/enhancedDateUtils';
 
@@ -60,47 +60,85 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
     return { absoluteChange, percentageChange };
   };
 
-  // Format change indicator with color and arrow
-  const formatChangeIndicator = (absoluteChange: number, percentageChange: number, isPercentage: boolean = false, isCurrency: boolean = true) => {
-    if (absoluteChange === 0) return null;
+  // Simplified format change indicator - only percentage with arrow
+  const formatChangeIndicator = (percentageChange: number) => {
+    if (Math.abs(percentageChange) < 0.1) return null;
 
-    const isPositive = absoluteChange > 0;
+    const isPositive = percentageChange > 0;
     const arrow = isPositive ? '↑' : '↓';
     const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
     
-    const formattedAbsolute = isPercentage 
-      ? `${Math.abs(absoluteChange).toFixed(1)}%`
-      : isCurrency 
-        ? `$${Math.abs(absoluteChange).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-        : Math.abs(absoluteChange).toLocaleString();
-
     const formattedPercentage = `${Math.abs(percentageChange).toFixed(1)}%`;
 
     return (
-      <div className={`text-xs ${colorClass} mt-1`}>
-        <div>{arrow} {isPositive ? '+' : '-'}{formattedAbsolute}</div>
-        <div className="text-gray-400">({isPositive ? '+' : '-'}{formattedPercentage})</div>
+      <div className={`text-xs ${colorClass} mt-0.5`}>
+        {arrow} {isPositive ? '+' : '-'}{formattedPercentage}
       </div>
     );
   };
 
-  // Format change indicator for CPA/Adjusted CPA/Avg Sale (with decimals)
-  const formatChangeIndicatorWithDecimals = (absoluteChange: number, percentageChange: number) => {
-    if (absoluteChange === 0) return null;
+  // Calculate overall trend for the month
+  const calculateOverallTrend = (row: any, previousRow: any) => {
+    if (!previousRow) return 'stable';
 
-    const isPositive = absoluteChange > 0;
-    const arrow = isPositive ? '↑' : '↓';
-    const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+    let positiveChanges = 0;
+    let negativeChanges = 0;
+    let totalChanges = 0;
+
+    // Check key metrics for trend
+    const metrics = [
+      { current: row.revenue, previous: previousRow.revenue, weight: 3 }, // Revenue is most important
+      { current: row.profit, previous: previousRow.profit, weight: 3 }, // Profit is most important
+      { current: row.profitMargin, previous: previousRow.profitMargin, weight: 2 },
+      { current: row.orders, previous: previousRow.orders, weight: 2 },
+      { current: row.cpa, previous: previousRow.cpa, weight: 1, inverse: true }, // Lower CPA is better
+      { current: row.adjustedCpa, previous: previousRow.adjustedCpa, weight: 1, inverse: true }
+    ];
+
+    metrics.forEach(metric => {
+      if (metric.previous !== 0) {
+        const change = (metric.current - metric.previous) / metric.previous;
+        const isPositive = metric.inverse ? change < 0 : change > 0;
+        
+        if (Math.abs(change) > 0.02) { // 2% threshold
+          if (isPositive) {
+            positiveChanges += metric.weight;
+          } else {
+            negativeChanges += metric.weight;
+          }
+          totalChanges += metric.weight;
+        }
+      }
+    });
+
+    if (totalChanges === 0) return 'stable';
     
-    const formattedAbsolute = `$${Math.abs(absoluteChange).toFixed(2)}`;
-    const formattedPercentage = `${Math.abs(percentageChange).toFixed(1)}%`;
+    const positiveRatio = positiveChanges / totalChanges;
+    if (positiveRatio > 0.6) return 'improving';
+    if (positiveRatio < 0.4) return 'declining';
+    return 'stable';
+  };
 
-    return (
-      <div className={`text-xs ${colorClass} mt-1`}>
-        <div>{arrow} {isPositive ? '+' : '-'}{formattedAbsolute}</div>
-        <div className="text-gray-400">({isPositive ? '+' : '-'}{formattedPercentage})</div>
-      </div>
-    );
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'improving':
+        return <ArrowUpRight className="w-4 h-4 text-green-600" />;
+      case 'declining':
+        return <ArrowDownRight className="w-4 h-4 text-red-600" />;
+      default:
+        return <ArrowRight className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getTrendLabel = (trend: string) => {
+    switch (trend) {
+      case 'improving':
+        return 'Improving';
+      case 'declining':
+        return 'Declining';
+      default:
+        return 'Stable';
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -112,7 +150,6 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
     }).format(amount);
   };
 
-  // New function to format currency with decimals for CPA, Adjusted CPA, and Average Sale
   const formatCurrencyWithDecimals = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -139,6 +176,17 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
         Poor
       </Badge>;
     }
+  };
+
+  const getRowBackgroundClass = (rating: string, isProfitable: boolean) => {
+    if (rating === 'excellent') {
+      return 'bg-green-50/30';
+    } else if (rating === 'good' && isProfitable) {
+      return 'bg-blue-50/30';
+    } else if (!isProfitable) {
+      return 'bg-red-50/50';
+    }
+    return '';
   };
 
   if (!isDataLoaded) {
@@ -188,6 +236,7 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
                 <TableHead className="text-right">Adjusted CPA</TableHead>
                 <TableHead className="text-right">Avg Sale</TableHead>
                 <TableHead className="text-center">Status</TableHead>
+                <TableHead className="text-center">Trend</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -205,58 +254,72 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
                 const adjustedCpaChange = previousRow ? calculateChange(row.adjustedCpa, previousRow.adjustedCpa) : null;
                 const avgSaleChange = previousRow ? calculateChange(row.avgSale, previousRow.avgSale) : null;
 
+                const overallTrend = previousRow ? calculateOverallTrend(row, previousRow) : 'stable';
+                const rowBgClass = getRowBackgroundClass(row.performanceRating, row.isProfitable);
+
                 return (
-                  <TableRow key={index} className={row.isProfitable ? '' : 'bg-red-50'}>
+                  <TableRow key={index} className={rowBgClass}>
                     <TableCell className="font-medium text-sm">
                       {row.month}
                     </TableCell>
                     <TableCell className="text-right font-semibold text-green-700">
                       <div>{formatCurrency(row.revenue)}</div>
-                      {revenueChange && formatChangeIndicator(revenueChange.absoluteChange, revenueChange.percentageChange)}
+                      {revenueChange && formatChangeIndicator(revenueChange.percentageChange)}
                     </TableCell>
                     <TableCell className="text-right text-red-600">
                       <div>{formatCurrency(row.adSpend)}</div>
-                      {adSpendChange && formatChangeIndicator(adSpendChange.absoluteChange, adSpendChange.percentageChange)}
+                      {adSpendChange && formatChangeIndicator(adSpendChange.percentageChange)}
                     </TableCell>
                     <TableCell className="text-right text-gray-700">
                       <div>{formatCurrency(row.totalCosts)}</div>
-                      {totalCostsChange && formatChangeIndicator(totalCostsChange.absoluteChange, totalCostsChange.percentageChange)}
+                      {totalCostsChange && formatChangeIndicator(totalCostsChange.percentageChange)}
                     </TableCell>
                     <TableCell className={`text-right font-semibold ${
                       row.profit > 0 ? 'text-green-700' : 'text-red-700'
                     }`}>
                       <div>{formatCurrency(row.profit)}</div>
-                      {profitChange && formatChangeIndicator(profitChange.absoluteChange, profitChange.percentageChange)}
+                      {profitChange && formatChangeIndicator(profitChange.percentageChange)}
                     </TableCell>
                     <TableCell className={`text-right font-medium ${
                       row.profitMargin > 20 ? 'text-green-700' : 
                       row.profitMargin > 0 ? 'text-blue-700' : 'text-red-700'
                     }`}>
                       <div>{row.profitMargin.toFixed(1)}%</div>
-                      {marginChange && formatChangeIndicator(marginChange.absoluteChange, marginChange.percentageChange, true, false)}
+                      {marginChange && formatChangeIndicator(marginChange.percentageChange)}
                     </TableCell>
                     <TableCell className="text-right text-gray-700">
                       <div>{row.orders.toLocaleString()}</div>
-                      {ordersChange && formatChangeIndicator(ordersChange.absoluteChange, ordersChange.percentageChange, false, false)}
+                      {ordersChange && formatChangeIndicator(ordersChange.percentageChange)}
                     </TableCell>
                     <TableCell className={`text-right ${
                       row.cpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
                     }`}>
                       <div>{formatCurrencyWithDecimals(row.cpa)}</div>
-                      {cpaChange && formatChangeIndicatorWithDecimals(cpaChange.absoluteChange, cpaChange.percentageChange)}
+                      {cpaChange && formatChangeIndicator(cpaChange.percentageChange)}
                     </TableCell>
                     <TableCell className={`text-right ${
                       row.adjustedCpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
                     }`}>
                       <div>{formatCurrencyWithDecimals(row.adjustedCpa)}</div>
-                      {adjustedCpaChange && formatChangeIndicatorWithDecimals(adjustedCpaChange.absoluteChange, adjustedCpaChange.percentageChange)}
+                      {adjustedCpaChange && formatChangeIndicator(adjustedCpaChange.percentageChange)}
                     </TableCell>
                     <TableCell className="text-right text-gray-700">
                       <div>{formatCurrencyWithDecimals(row.avgSale)}</div>
-                      {avgSaleChange && formatChangeIndicatorWithDecimals(avgSaleChange.absoluteChange, avgSaleChange.percentageChange)}
+                      {avgSaleChange && formatChangeIndicator(avgSaleChange.percentageChange)}
                     </TableCell>
                     <TableCell className="text-center">
                       {getPerformanceBadge(row.performanceRating, row.isProfitable)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {getTrendIcon(overallTrend)}
+                        <span className={`text-xs font-medium ${
+                          overallTrend === 'improving' ? 'text-green-600' :
+                          overallTrend === 'declining' ? 'text-red-600' : 'text-gray-500'
+                        }`}>
+                          {getTrendLabel(overallTrend)}
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
