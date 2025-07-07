@@ -15,6 +15,8 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
   const recommendations = generateRecommendations();
   const quickWins = generateQuickWins();
 
+  console.log('RecommendationsPanel rendering with', recommendations.length, 'recommendations');
+
   return (
     <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
       <CardHeader>
@@ -38,6 +40,9 @@ const RecommendationsPanel = ({ productId, timeFrame }: RecommendationsPanelProp
               icon={rec.icon}
               color={rec.color}
               action={rec.action}
+              dataInsight={rec.dataInsight}
+              expectedImpact={rec.expectedImpact}
+              timeframe={rec.timeframe}
             />
           ))}
         </div>

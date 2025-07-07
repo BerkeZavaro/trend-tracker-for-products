@@ -8,15 +8,20 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
 
   const generateRecommendations = () => {
     if (!isDataLoaded || !productId) {
+      console.log('No data loaded or no product selected');
       return [];
     }
 
     const allProductData = getProductData(productId);
+    console.log('All product data:', allProductData.length, 'items');
     
     // Filter data by time frame using enhanced date comparison
     const filteredData = allProductData.filter(item => {
       return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
+
+    console.log('Filtered data for timeframe:', filteredData.length, 'items');
+    console.log('Timeframe:', timeFrame);
 
     // Use the enhanced recommendations engine
     const enhancedRecommendations = generateEnhancedRecommendations(
@@ -26,7 +31,9 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
       timeFrame
     );
 
-    // Convert to the expected format
+    console.log('Generated recommendations:', enhancedRecommendations.length);
+
+    // Convert to the expected format with all required properties
     return enhancedRecommendations.map(rec => ({
       type: rec.type,
       priority: rec.priority,
@@ -34,7 +41,10 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
       description: rec.description,
       icon: rec.icon,
       color: rec.color,
-      action: rec.action
+      action: rec.action,
+      dataInsight: rec.dataInsight,
+      expectedImpact: rec.expectedImpact,
+      timeframe: rec.timeframe
     }));
   };
 
