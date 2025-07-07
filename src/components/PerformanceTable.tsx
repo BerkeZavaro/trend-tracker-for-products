@@ -64,22 +64,22 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
         <CardTitle className="text-xl text-gray-800">Monthly Performance Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-white/95 backdrop-blur-sm z-10 shadow-sm">
               <TableRow>
-                <TableHead className="w-24">Month</TableHead>
-                <TableHead className="text-right">Revenue</TableHead>
-                <TableHead className="text-right">Ad Spend</TableHead>
-                <TableHead className="text-right">Total Costs</TableHead>
-                <TableHead className="text-right">Profit</TableHead>
-                <TableHead className="text-right">Margin</TableHead>
-                <TableHead className="text-right">Orders</TableHead>
-                <TableHead className="text-right">CPA</TableHead>
-                <TableHead className="text-right">Adjusted CPA</TableHead>
-                <TableHead className="text-right">Avg Sale</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Trend</TableHead>
+                <TableHead className="w-24 bg-white/95">Month</TableHead>
+                <TableHead className="text-right bg-white/95">Revenue</TableHead>
+                <TableHead className="text-right bg-white/95">Ad Spend</TableHead>
+                <TableHead className="text-right bg-white/95">Total Costs</TableHead>
+                <TableHead className="text-right bg-white/95">Profit</TableHead>
+                <TableHead className="text-right bg-white/95">Margin</TableHead>
+                <TableHead className="text-right bg-white/95">Orders</TableHead>
+                <TableHead className="text-right bg-white/95">CPA</TableHead>
+                <TableHead className="text-right bg-white/95">Adjusted CPA</TableHead>
+                <TableHead className="text-right bg-white/95">Avg Sale</TableHead>
+                <TableHead className="text-center bg-white/95">Status</TableHead>
+                <TableHead className="text-center bg-white/95">Trend</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
