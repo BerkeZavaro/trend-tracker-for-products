@@ -59,6 +59,15 @@ export const getPreviousYearMonth = (currentMonth: string): string => {
     return result;
   }
   
+  // Handle MM/YYYY format (e.g., "5/2023" or "10/2023")
+  if (currentMonth.match(/^\d{1,2}\/\d{4}$/)) {
+    const [month, year] = currentMonth.split('/');
+    const previousYear = (parseInt(year) - 1).toString();
+    const result = `${month}/${previousYear}`;
+    console.log('getPreviousYearMonth - MM/YYYY result:', result);
+    return result;
+  }
+  
   console.log('getPreviousYearMonth - no match, returning empty');
   return '';
 };
