@@ -45,3 +45,38 @@ export const calculateOverallTrend = (row: any, previousRow: any): 'improving' |
   if (positiveRatio < 0.4) return 'declining';
   return 'stable';
 };
+
+// Helper function to get previous year month
+export const getPreviousYearMonth = (currentMonth: string): string => {
+  // Handle YYYY-MM format
+  if (currentMonth.match(/^\d{4}-\d{2}$/)) {
+    const [year, month] = currentMonth.split('-');
+    const previousYear = (parseInt(year) - 1).toString();
+    return `${previousYear}-${month}`;
+  }
+  return '';
+};
+
+// Calculate Year-over-Year change
+export const calculateYoYChange = (currentRow: any, allProductData: any[]) => {
+  const currentMonth = currentRow.month;
+  const previousYearMonth = getPreviousYearMonth(currentMonth);
+  
+  if (!previousYearMonth) return null;
+  
+  // Find the same month from previous year
+  const previousYearRow = allProductData.find(row => row.month === previousYearMonth);
+  
+  if (!previousYearRow) return null;
+  
+  return {
+    revenue: calculateChange(currentRow.revenue, previousYearRow.revenue),
+    profit: calculateChange(currentRow.profit, previousYearRow.profit),
+    profitMargin: calculateChange(currentRow.profitMargin, previousYearRow.profitMargin),
+    orders: calculateChange(currentRow.orders, previousYearRow.orders),
+    cpa: calculateChange(currentRow.cpa, previousYearRow.cpa),
+    adjustedCpa: calculateChange(currentRow.adjustedCpa, previousYearRow.adjustedCpa),
+    avgSale: calculateChange(currentRow.avgSale, previousYearRow.avgSale),
+    comparedToMonth: previousYearMonth
+  };
+};
