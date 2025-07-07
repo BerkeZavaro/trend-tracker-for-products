@@ -13,17 +13,18 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
         profit: 0,
         profitMargin: 0,
         totalOrders: 0,
-        avgCPA: 0,
+        avgAdjustedCPA: 0,
         avgSale: 0,
-        monthlyGrowth: 0,
+        periodGrowth: 0,
+        growthLabel: 'vs previous period',
         isProfitable: false
       };
     }
 
-    const productData = getProductData(productId);
+    const allProductData = getProductData(productId);
     
     // Filter data by time frame using enhanced date comparison
-    const filteredData = productData.filter(item => {
+    const filteredData = allProductData.filter(item => {
       return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
     
@@ -36,22 +37,57 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
     
     const profit = totalRevenue - totalCosts;
     const profitMargin = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
-    const avgCPA = totalOrders > 0 ? totalAdSpend / totalOrders : 0;
     const avgSale = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
-    // Calculate growth (compare last two months if available)
-    const sortedData = filteredData.sort((a, b) => {
-      const aDate = isDateInRange(a.month, '2024-01', '2025-12', uploadedData) ? a.month : '2024-01';
-      const bDate = isDateInRange(b.month, '2024-01', '2025-12', uploadedData) ? b.month : '2024-01';
-      return aDate.localeCompare(bDate);
-    });
+    // Calculate average adjusted CPA from monthly data
+    const validAdjustedCPAData = filteredData.filter(item => item.adjustedCpa > 0);
+    const avgAdjustedCPA = validAdjustedCPAData.length > 0 
+      ? validAdjustedCPAData.reduce((sum, item) => sum + item.adjustedCpa, 0) / validAdjustedCPAData.length 
+      : 0;
     
-    let monthlyGrowth = 0;
-    if (sortedData.length >= 2) {
-      const lastMonth = sortedData[sortedData.length - 1].revenue;
-      const previousMonth = sortedData[sortedData.length - 2].revenue;
-      monthlyGrowth = previousMonth > 0 ? ((lastMonth - previousMonth) / previousMonth) * 100 : 0;
-    }
+    // Calculate period-over-period growth
+    const calculatePeriodGrowth = () => {
+      if (filteredData.length === 0) return { growth: 0, label: 'vs previous period' };
+      
+      // Calculate the length of the selected period in months
+      const startDate = new Date(timeFrame.start + '-01');
+      const endDate = new Date(timeFrame.end + '-01');
+      const periodLength = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
+                          (endDate.getMonth() - startDate.getMonth()) + 1;
+      
+      // Try to find equivalent previous period (same length)
+      const previousEndDate = new Date(startDate);
+      previousEndDate.setMonth(previousEndDate.getMonth() - 1);
+      const previousStartDate = new Date(previousEndDate);
+      previousStartDate.setMonth(previousStartDate.getMonth() - periodLength + 1);
+      
+      const previousStart = previousStartDate.toISOString().slice(0, 7);
+      const previousEnd = previousEndDate.toISOString().slice(0, 7);
+      
+      const previousPeriodData = allProductData.filter(item => {
+        return isDateInRange(item.month, previousStart, previousEnd, uploadedData);
+      });
+      
+      if (previousPeriodData.length === 0) {
+        return { growth: 0, label: 'vs previous period (no data)' };
+      }
+      
+      const previousRevenue = previousPeriodData.reduce((sum, item) => sum + (item.revenue || 0), 0);
+      
+      if (previousRevenue === 0) {
+        return { growth: 0, label: 'vs previous period' };
+      }
+      
+      const growth = ((totalRevenue - previousRevenue) / previousRevenue) * 100;
+      
+      // Determine appropriate label
+      const isYearOverYear = previousStartDate.getFullYear() !== startDate.getFullYear();
+      const label = isYearOverYear ? 'vs same period last year' : 'vs previous period';
+      
+      return { growth, label };
+    };
+    
+    const { growth: periodGrowth, label: growthLabel } = calculatePeriodGrowth();
 
     return {
       totalRevenue,
@@ -59,9 +95,10 @@ export const useMetricsCalculations = (productId: string, timeFrame: { start: st
       profit,
       profitMargin,
       totalOrders,
-      avgCPA,
+      avgAdjustedCPA,
       avgSale,
-      monthlyGrowth,
+      periodGrowth,
+      growthLabel,
       isProfitable: profit > 0
     };
   };

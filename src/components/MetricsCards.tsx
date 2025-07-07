@@ -23,11 +23,21 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
     }).format(amount);
   };
 
+  const formatCurrencyWithDecimals = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <RevenueCard 
         totalRevenue={metrics.totalRevenue}
-        monthlyGrowth={metrics.monthlyGrowth}
+        periodGrowth={metrics.periodGrowth}
+        growthLabel={metrics.growthLabel}
         formatCurrency={formatCurrency}
       />
       <ProfitCard
@@ -42,10 +52,10 @@ const MetricsCards = ({ productId, timeFrame }: MetricsCardsProps) => {
         formatCurrency={formatCurrency}
       />
       <CPACard
-        avgCPA={metrics.avgCPA}
+        avgAdjustedCPA={metrics.avgAdjustedCPA}
         avgSale={metrics.avgSale}
         totalOrders={metrics.totalOrders}
-        formatCurrency={formatCurrency}
+        formatCurrency={formatCurrencyWithDecimals}
       />
     </div>
   );
