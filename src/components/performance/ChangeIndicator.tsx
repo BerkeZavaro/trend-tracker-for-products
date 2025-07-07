@@ -13,9 +13,9 @@ const ChangeIndicator = ({ percentageChange }: ChangeIndicatorProps) => {
   const formattedPercentage = `${Math.abs(percentageChange).toFixed(1)}%`;
 
   return (
-    <div className={`text-xs ${colorClass} mt-0.5`}>
-      {arrow} {isPositive ? '+' : '-'}{formattedPercentage}
-    </div>
+    <span className={`text-[10px] ${colorClass} ml-1`}>
+      {arrow}{isPositive ? '+' : '-'}{formattedPercentage}
+    </span>
   );
 };
 

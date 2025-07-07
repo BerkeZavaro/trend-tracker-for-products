@@ -33,40 +33,58 @@ const PerformanceTableRow = ({ row, previousRow, index }: PerformanceTableRowPro
         {row.month}
       </TableCell>
       <TableCell className="text-right font-semibold text-slate-800">
-        <div>{formatCurrency(row.revenue)}</div>
-        {revenueChange && <ChangeIndicator percentageChange={revenueChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrency(row.revenue)}
+          {revenueChange && <ChangeIndicator percentageChange={revenueChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right text-slate-700">
-        <div>{formatCurrency(row.adSpend)}</div>
-        {adSpendChange && <ChangeIndicator percentageChange={adSpendChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrency(row.adSpend)}
+          {adSpendChange && <ChangeIndicator percentageChange={adSpendChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right text-slate-700">
-        <div>{formatCurrency(row.totalCosts)}</div>
-        {totalCostsChange && <ChangeIndicator percentageChange={totalCostsChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrency(row.totalCosts)}
+          {totalCostsChange && <ChangeIndicator percentageChange={totalCostsChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right font-semibold text-slate-800">
-        <div>{formatCurrency(row.profit)}</div>
-        {profitChange && <ChangeIndicator percentageChange={profitChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrency(row.profit)}
+          {profitChange && <ChangeIndicator percentageChange={profitChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right font-medium text-slate-700">
-        <div>{row.profitMargin.toFixed(1)}%</div>
-        {marginChange && <ChangeIndicator percentageChange={marginChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {row.profitMargin.toFixed(1)}%
+          {marginChange && <ChangeIndicator percentageChange={marginChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right text-slate-700">
-        <div>{row.orders.toLocaleString()}</div>
-        {ordersChange && <ChangeIndicator percentageChange={ordersChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {row.orders.toLocaleString()}
+          {ordersChange && <ChangeIndicator percentageChange={ordersChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right text-slate-600">
-        <div>{formatCurrencyWithDecimals(row.cpa)}</div>
-        {cpaChange && <ChangeIndicator percentageChange={cpaChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrencyWithDecimals(row.cpa)}
+          {cpaChange && <ChangeIndicator percentageChange={cpaChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right text-slate-600">
-        <div>{formatCurrencyWithDecimals(row.adjustedCpa)}</div>
-        {adjustedCpaChange && <ChangeIndicator percentageChange={adjustedCpaChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrencyWithDecimals(row.adjustedCpa)}
+          {adjustedCpaChange && <ChangeIndicator percentageChange={adjustedCpaChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-right text-slate-700">
-        <div>{formatCurrencyWithDecimals(row.avgSale)}</div>
-        {avgSaleChange && <ChangeIndicator percentageChange={avgSaleChange.percentageChange} />}
+        <span className="inline-flex items-baseline">
+          {formatCurrencyWithDecimals(row.avgSale)}
+          {avgSaleChange && <ChangeIndicator percentageChange={avgSaleChange.percentageChange} />}
+        </span>
       </TableCell>
       <TableCell className="text-center">
         <PerformanceBadge rating={row.performanceRating} isProfitable={row.isProfitable} />
