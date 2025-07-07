@@ -1,6 +1,7 @@
+
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
-import { AlertTriangle, TrendingUp, Target, Lightbulb } from 'lucide-react';
+import { generateEnhancedRecommendations } from '@/utils/enhancedRecommendations';
 
 export const useRecommendationsData = (productId: string, timeFrame: { start: string; end: string }) => {
   const { getProductData, isDataLoaded, uploadedData } = useData();
@@ -10,113 +11,31 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
       return [];
     }
 
-    const productData = getProductData(productId);
+    const allProductData = getProductData(productId);
     
     // Filter data by time frame using enhanced date comparison
-    const filteredData = productData.filter(item => {
+    const filteredData = allProductData.filter(item => {
       return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
 
-    if (filteredData.length === 0) {
-      return [{
-        type: 'info',
-        priority: 'medium',
-        title: 'No Data Available',
-        description: 'No data found for the selected time period. Try adjusting your date range.',
-        icon: AlertTriangle,
-        color: 'orange',
-        action: 'Select a different date range'
-      }];
-    }
+    // Use the enhanced recommendations engine
+    const enhancedRecommendations = generateEnhancedRecommendations(
+      filteredData, 
+      allProductData, 
+      uploadedData, 
+      timeFrame
+    );
 
-    const recommendations = [];
-
-    // Calculate actual metrics
-    const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
-    const totalAdSpend = filteredData.reduce((sum, item) => sum + item.adSpend, 0);
-    const totalOrders = filteredData.reduce((sum, item) => sum + item.orders, 0);
-    const totalCosts = filteredData.reduce((sum, item) => sum + item.adSpend + item.nonAdCosts + item.thirdPartyCosts, 0);
-    
-    const avgCPA = totalOrders > 0 ? totalAdSpend / totalOrders : 0;
-    const avgSale = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-    const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
-
-    // CPA Analysis
-    if (avgCPA > 0 && avgSale > 0) {
-      if (avgCPA < avgSale * 0.7) {
-        recommendations.push({
-          type: 'scale',
-          priority: 'high',
-          title: 'Scale Advertising Spend',
-          description: `Your CPA ($${avgCPA.toFixed(2)}) is well below average sale value ($${avgSale.toFixed(2)}). Consider increasing ad spend.`,
-          icon: TrendingUp,
-          color: 'green',
-          action: 'Increase budget by 25-30%'
-        });
-      } else if (avgCPA > avgSale * 0.85) {
-        recommendations.push({
-          type: 'optimize',
-          priority: 'high',
-          title: 'Optimize Ad Performance',
-          description: `CPA ($${avgCPA.toFixed(2)}) is too high relative to average sale value ($${avgSale.toFixed(2)}).`,
-          icon: Target,
-          color: 'red',
-          action: 'Review targeting and bidding strategy'
-        });
-      }
-    }
-
-    // Profit Margin Analysis
-    if (profitMargin > 25) {
-      recommendations.push({
-        type: 'growth',
-        priority: 'medium',
-        title: 'Strong Margins - Consider Growth',
-        description: `Healthy profit margin (${profitMargin.toFixed(1)}%) provides room for testing new strategies.`,
-        icon: Lightbulb,
-        color: 'purple',
-        action: 'Test new advertising channels'
-      });
-    } else if (profitMargin < 15 && profitMargin > -100) {
-      recommendations.push({
-        type: 'margins',
-        priority: 'high',
-        title: 'Review Cost Structure',
-        description: `Profit margin (${profitMargin.toFixed(1)}%) needs improvement. Review costs and pricing.`,
-        icon: AlertTriangle,
-        color: 'orange',
-        action: 'Audit all costs and pricing strategy'
-      });
-    }
-
-    // Monthly Performance Analysis
-    if (filteredData.length >= 2) {
-      const sortedData = filteredData.sort((a, b) => {
-        const aDate = isDateInRange(a.month, '2024-01', '2025-12', uploadedData) ? a.month : '2024-01';
-        const bDate = isDateInRange(b.month, '2024-01', '2025-12', uploadedData) ? b.month : '2024-01';
-        return aDate.localeCompare(bDate);
-      });
-      const bestMonth = sortedData.reduce((best, current) => 
-        current.revenue > best.revenue ? current : best
-      );
-      const worstMonth = sortedData.reduce((worst, current) => 
-        current.revenue < worst.revenue ? current : worst
-      );
-
-      if (bestMonth.month !== worstMonth.month) {
-        recommendations.push({
-          type: 'seasonal',
-          priority: 'medium',
-          title: 'Performance Variation Detected',
-          description: `Month ${bestMonth.month} was your best ($${bestMonth.revenue.toLocaleString()}) vs Month ${worstMonth.month} ($${worstMonth.revenue.toLocaleString()}).`,
-          icon: TrendingUp,
-          color: 'teal',
-          action: 'Analyze what worked in top-performing months'
-        });
-      }
-    }
-
-    return recommendations;
+    // Convert to the expected format
+    return enhancedRecommendations.map(rec => ({
+      type: rec.type,
+      priority: rec.priority,
+      title: rec.title,
+      description: rec.description,
+      icon: rec.icon,
+      color: rec.color,
+      action: rec.action
+    }));
   };
 
   const generateQuickWins = () => {
@@ -124,8 +43,8 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
       return [];
     }
 
-    const productData = getProductData(productId);
-    const filteredData = productData.filter(item => {
+    const allProductData = getProductData(productId);
+    const filteredData = allProductData.filter(item => {
       return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
 
@@ -134,25 +53,52 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
     }
 
     const quickWins = [];
-    const avgThirdPartyCosts = filteredData.reduce((sum, item) => sum + item.thirdPartyCosts, 0) / filteredData.length;
-    const avgAdSpend = filteredData.reduce((sum, item) => sum + item.adSpend, 0) / filteredData.length;
     
-    if (avgThirdPartyCosts < avgAdSpend * 0.3) {
-      quickWins.push(`Third-party costs are relatively low (avg $${avgThirdPartyCosts.toFixed(0)}) - good cost management`);
+    // Month-to-month improvements
+    if (filteredData.length >= 2) {
+      const sortedData = [...filteredData].sort((a, b) => a.month.localeCompare(b.month));
+      const lastMonth = sortedData[sortedData.length - 1];
+      const previousMonth = sortedData[sortedData.length - 2];
+      
+      if (lastMonth.revenue > previousMonth.revenue) {
+        const improvement = ((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue * 100).toFixed(1);
+        quickWins.push(`Revenue grew ${improvement}% from ${previousMonth.month} to ${lastMonth.month} - momentum is building`);
+      }
+      
+      // CPA efficiency check
+      const lastCPA = lastMonth.orders > 0 ? (lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts) / lastMonth.orders : 0;
+      const prevCPA = previousMonth.orders > 0 ? (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders : 0;
+      
+      if (lastCPA < prevCPA && lastCPA > 0) {
+        const improvement = ((prevCPA - lastCPA) / prevCPA * 100).toFixed(1);
+        quickWins.push(`Cost per acquisition improved ${improvement}% - efficiency is increasing`);
+      }
     }
 
-    // Find best performing month
-    if (filteredData.length > 1) {
-      const bestMonth = filteredData.reduce((best, current) => 
-        current.revenue > best.revenue ? current : best
-      );
-      quickWins.push(`Month ${bestMonth.month} was your best with $${bestMonth.revenue.toLocaleString()} revenue - analyze this period`);
+    // Year-over-year comparison
+    const currentYear = new Date().getFullYear();
+    const currentYearData = filteredData.filter(item => item.month.startsWith(currentYear.toString()));
+    const lastYearData = allProductData.filter(item => item.month.startsWith((currentYear - 1).toString()));
+    
+    if (currentYearData.length > 0 && lastYearData.length > 0) {
+      const currentAvg = currentYearData.reduce((sum, item) => sum + item.revenue, 0) / currentYearData.length;
+      const lastYearAvg = lastYearData.reduce((sum, item) => sum + item.revenue, 0) / lastYearData.length;
+      
+      if (currentAvg > lastYearAvg) {
+        const improvement = ((currentAvg - lastYearAvg) / lastYearAvg * 100).toFixed(1);
+        quickWins.push(`Outperforming last year by ${improvement}% on average - strong year-over-year growth`);
+      }
     }
 
-    // Check for consistent order volume
-    const avgOrders = filteredData.reduce((sum, item) => sum + item.orders, 0) / filteredData.length;
-    if (avgOrders > 0) {
-      quickWins.push(`Average ${Math.round(avgOrders)} orders per month shows consistent demand`);
+    // Profit margin health check
+    const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalCosts = filteredData.reduce((sum, item) => sum + item.adSpend + item.nonAdCosts + item.thirdPartyCosts, 0);
+    const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
+    
+    if (profitMargin > 25) {
+      quickWins.push(`Strong ${profitMargin.toFixed(1)}% profit margin provides room for strategic investments`);
+    } else if (profitMargin > 15) {
+      quickWins.push(`Healthy ${profitMargin.toFixed(1)}% profit margin - focus on maintaining efficiency`);
     }
 
     return quickWins.length > 0 ? quickWins : ['Continue monitoring performance for optimization opportunities'];

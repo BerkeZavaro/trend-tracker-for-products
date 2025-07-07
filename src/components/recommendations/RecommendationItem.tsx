@@ -10,6 +10,9 @@ interface RecommendationItemProps {
   icon: LucideIcon;
   color: string;
   action: string;
+  dataInsight?: string;
+  expectedImpact?: string;
+  timeframe?: string;
 }
 
 const RecommendationItem = ({ 
@@ -19,7 +22,10 @@ const RecommendationItem = ({
   description, 
   icon: Icon, 
   color, 
-  action 
+  action,
+  dataInsight,
+  expectedImpact,
+  timeframe
 }: RecommendationItemProps) => {
   const getIconColor = (color: string) => {
     const colors = {
@@ -35,8 +41,10 @@ const RecommendationItem = ({
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
+      case 'critical':
+        return <Badge variant="destructive" className="text-xs font-semibold">Critical</Badge>;
       case 'high':
-        return <Badge variant="destructive" className="text-xs">High Priority</Badge>;
+        return <Badge variant="destructive" className="text-xs bg-orange-500">High Priority</Badge>;
       case 'medium':
         return <Badge variant="secondary" className="text-xs">Medium Priority</Badge>;
       case 'low':
@@ -46,23 +54,62 @@ const RecommendationItem = ({
     }
   };
 
+  const getTimeframeBadge = (timeframe?: string) => {
+    if (!timeframe) return null;
+    
+    const timeframeColors = {
+      'immediate': 'bg-red-100 text-red-800',
+      'next-month': 'bg-blue-100 text-blue-800',
+      'next-quarter': 'bg-purple-100 text-purple-800'
+    };
+    
+    return (
+      <span className={`text-xs px-2 py-1 rounded-full ${timeframeColors[timeframe as keyof typeof timeframeColors] || 'bg-gray-100 text-gray-800'}`}>
+        {timeframe.replace('-', ' ')}
+      </span>
+    );
+  };
+
   return (
     <div className="p-4 rounded-lg border border-gray-200 bg-white/50 hover:bg-white/80 transition-colors">
       <div className="flex items-start gap-4">
         <div className={`p-2 rounded-lg bg-gray-50 ${getIconColor(color)}`}>
           <Icon className="w-5 h-5" />
         </div>
-        <div className="flex-1 space-y-2">
+        <div className="flex-1 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-semibold text-gray-900">{title}</h4>
-            {getPriorityBadge(priority)}
+            <div className="flex items-center gap-2">
+              {getTimeframeBadge(timeframe)}
+              {getPriorityBadge(priority)}
+            </div>
           </div>
+          
           <p className="text-sm text-gray-600">{description}</p>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-500">Suggested action:</span>
-            <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
-              {action}
-            </span>
+          
+          {dataInsight && (
+            <div className="bg-gray-50 rounded-md p-3">
+              <div className="text-xs font-medium text-gray-500 mb-1">Data Insight:</div>
+              <div className="text-sm text-gray-700">{dataInsight}</div>
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500">Recommended action:</span>
+              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+                {action}
+              </span>
+            </div>
+            
+            {expectedImpact && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-500">Expected impact:</span>
+                <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                  {expectedImpact}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
