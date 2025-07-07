@@ -53,6 +53,56 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
 
   const data = getRealData();
 
+  // Calculate month-over-month changes
+  const calculateChange = (current: number, previous: number) => {
+    const absoluteChange = current - previous;
+    const percentageChange = previous !== 0 ? (absoluteChange / previous) * 100 : 0;
+    return { absoluteChange, percentageChange };
+  };
+
+  // Format change indicator with color and arrow
+  const formatChangeIndicator = (absoluteChange: number, percentageChange: number, isPercentage: boolean = false, isCurrency: boolean = true) => {
+    if (absoluteChange === 0) return null;
+
+    const isPositive = absoluteChange > 0;
+    const arrow = isPositive ? '↑' : '↓';
+    const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+    
+    const formattedAbsolute = isPercentage 
+      ? `${Math.abs(absoluteChange).toFixed(1)}%`
+      : isCurrency 
+        ? `$${Math.abs(absoluteChange).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+        : Math.abs(absoluteChange).toLocaleString();
+
+    const formattedPercentage = `${Math.abs(percentageChange).toFixed(1)}%`;
+
+    return (
+      <div className={`text-xs ${colorClass} mt-1`}>
+        <div>{arrow} {isPositive ? '+' : '-'}{formattedAbsolute}</div>
+        <div className="text-gray-400">({isPositive ? '+' : '-'}{formattedPercentage})</div>
+      </div>
+    );
+  };
+
+  // Format change indicator for CPA/Adjusted CPA/Avg Sale (with decimals)
+  const formatChangeIndicatorWithDecimals = (absoluteChange: number, percentageChange: number) => {
+    if (absoluteChange === 0) return null;
+
+    const isPositive = absoluteChange > 0;
+    const arrow = isPositive ? '↑' : '↓';
+    const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+    
+    const formattedAbsolute = `$${Math.abs(absoluteChange).toFixed(2)}`;
+    const formattedPercentage = `${Math.abs(percentageChange).toFixed(1)}%`;
+
+    return (
+      <div className={`text-xs ${colorClass} mt-1`}>
+        <div>{arrow} {isPositive ? '+' : '-'}{formattedAbsolute}</div>
+        <div className="text-gray-400">({isPositive ? '+' : '-'}{formattedPercentage})</div>
+      </div>
+    );
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -141,52 +191,76 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((row, index) => (
-                <TableRow key={index} className={row.isProfitable ? '' : 'bg-red-50'}>
-                  <TableCell className="font-medium text-sm">
-                    {row.month}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold text-green-700">
-                    {formatCurrency(row.revenue)}
-                  </TableCell>
-                  <TableCell className="text-right text-red-600">
-                    {formatCurrency(row.adSpend)}
-                  </TableCell>
-                  <TableCell className="text-right text-gray-700">
-                    {formatCurrency(row.totalCosts)}
-                  </TableCell>
-                  <TableCell className={`text-right font-semibold ${
-                    row.profit > 0 ? 'text-green-700' : 'text-red-700'
-                  }`}>
-                    {formatCurrency(row.profit)}
-                  </TableCell>
-                  <TableCell className={`text-right font-medium ${
-                    row.profitMargin > 20 ? 'text-green-700' : 
-                    row.profitMargin > 0 ? 'text-blue-700' : 'text-red-700'
-                  }`}>
-                    {row.profitMargin.toFixed(1)}%
-                  </TableCell>
-                  <TableCell className="text-right text-gray-700">
-                    {row.orders.toLocaleString()}
-                  </TableCell>
-                  <TableCell className={`text-right ${
-                    row.cpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
-                  }`}>
-                    {formatCurrencyWithDecimals(row.cpa)}
-                  </TableCell>
-                  <TableCell className={`text-right ${
-                    row.adjustedCpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
-                  }`}>
-                    {formatCurrencyWithDecimals(row.adjustedCpa)}
-                  </TableCell>
-                  <TableCell className="text-right text-gray-700">
-                    {formatCurrencyWithDecimals(row.avgSale)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {getPerformanceBadge(row.performanceRating, row.isProfitable)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {data.map((row, index) => {
+                const previousRow = index > 0 ? data[index - 1] : null;
+                
+                // Calculate changes for each metric
+                const revenueChange = previousRow ? calculateChange(row.revenue, previousRow.revenue) : null;
+                const adSpendChange = previousRow ? calculateChange(row.adSpend, previousRow.adSpend) : null;
+                const totalCostsChange = previousRow ? calculateChange(row.totalCosts, previousRow.totalCosts) : null;
+                const profitChange = previousRow ? calculateChange(row.profit, previousRow.profit) : null;
+                const marginChange = previousRow ? calculateChange(row.profitMargin, previousRow.profitMargin) : null;
+                const ordersChange = previousRow ? calculateChange(row.orders, previousRow.orders) : null;
+                const cpaChange = previousRow ? calculateChange(row.cpa, previousRow.cpa) : null;
+                const adjustedCpaChange = previousRow ? calculateChange(row.adjustedCpa, previousRow.adjustedCpa) : null;
+                const avgSaleChange = previousRow ? calculateChange(row.avgSale, previousRow.avgSale) : null;
+
+                return (
+                  <TableRow key={index} className={row.isProfitable ? '' : 'bg-red-50'}>
+                    <TableCell className="font-medium text-sm">
+                      {row.month}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-green-700">
+                      <div>{formatCurrency(row.revenue)}</div>
+                      {revenueChange && formatChangeIndicator(revenueChange.absoluteChange, revenueChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      <div>{formatCurrency(row.adSpend)}</div>
+                      {adSpendChange && formatChangeIndicator(adSpendChange.absoluteChange, adSpendChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className="text-right text-gray-700">
+                      <div>{formatCurrency(row.totalCosts)}</div>
+                      {totalCostsChange && formatChangeIndicator(totalCostsChange.absoluteChange, totalCostsChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className={`text-right font-semibold ${
+                      row.profit > 0 ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      <div>{formatCurrency(row.profit)}</div>
+                      {profitChange && formatChangeIndicator(profitChange.absoluteChange, profitChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className={`text-right font-medium ${
+                      row.profitMargin > 20 ? 'text-green-700' : 
+                      row.profitMargin > 0 ? 'text-blue-700' : 'text-red-700'
+                    }`}>
+                      <div>{row.profitMargin.toFixed(1)}%</div>
+                      {marginChange && formatChangeIndicator(marginChange.absoluteChange, marginChange.percentageChange, true, false)}
+                    </TableCell>
+                    <TableCell className="text-right text-gray-700">
+                      <div>{row.orders.toLocaleString()}</div>
+                      {ordersChange && formatChangeIndicator(ordersChange.absoluteChange, ordersChange.percentageChange, false, false)}
+                    </TableCell>
+                    <TableCell className={`text-right ${
+                      row.cpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
+                    }`}>
+                      <div>{formatCurrencyWithDecimals(row.cpa)}</div>
+                      {cpaChange && formatChangeIndicatorWithDecimals(cpaChange.absoluteChange, cpaChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className={`text-right ${
+                      row.adjustedCpa < row.avgSale * 0.8 ? 'text-green-700' : 'text-orange-600'
+                    }`}>
+                      <div>{formatCurrencyWithDecimals(row.adjustedCpa)}</div>
+                      {adjustedCpaChange && formatChangeIndicatorWithDecimals(adjustedCpaChange.absoluteChange, adjustedCpaChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className="text-right text-gray-700">
+                      <div>{formatCurrencyWithDecimals(row.avgSale)}</div>
+                      {avgSaleChange && formatChangeIndicatorWithDecimals(avgSaleChange.absoluteChange, avgSaleChange.percentageChange)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {getPerformanceBadge(row.performanceRating, row.isProfitable)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
