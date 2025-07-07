@@ -16,7 +16,7 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
 
   const getRealData = () => {
     if (!isDataLoaded || !productId) {
-      return { filteredData: [], allData: [] };
+      return [];
     }
 
     const productData = getProductData(productId);
@@ -26,19 +26,11 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
       return isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData);
     });
 
-    // Process the filtered data to calculate derived metrics
-    const processedFilteredData = processPerformanceData(filteredData);
-    
-    // Process all product data (needed for YoY comparisons) 
-    const processedAllData = processPerformanceData(productData);
-
-    return { 
-      filteredData: processedFilteredData, 
-      allData: processedAllData 
-    };
+    // Process the real data to calculate derived metrics
+    return processPerformanceData(filteredData);
   };
 
-  const { filteredData, allData } = getRealData();
+  const data = getRealData();
 
   if (!isDataLoaded) {
     return (
@@ -53,7 +45,7 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
     );
   }
 
-  if (filteredData.length === 0) {
+  if (data.length === 0) {
     return (
       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur mb-8">
         <CardHeader>
@@ -91,8 +83,8 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((row, index) => {
-                const previousRow = index > 0 ? filteredData[index - 1] : null;
+              {data.map((row, index) => {
+                const previousRow = index > 0 ? data[index - 1] : null;
                 
                 return (
                   <PerformanceTableRow
@@ -100,7 +92,6 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
                     row={row}
                     previousRow={previousRow}
                     index={index}
-                    allProductData={allData}
                   />
                 );
               })}

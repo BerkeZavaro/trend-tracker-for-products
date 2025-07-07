@@ -44,11 +44,11 @@ export const processPerformanceData = (productData: any[]) => {
 
 export const getRowBackgroundClass = (rating: string, isProfitable: boolean) => {
   if (rating === 'excellent') {
-    return 'bg-green-50/40 hover:bg-green-50/60';
+    return 'bg-green-50/60 hover:bg-green-50/80';
   } else if (rating === 'good' && isProfitable) {
-    return 'bg-blue-50/40 hover:bg-blue-50/60';
+    return 'bg-blue-50/60 hover:bg-blue-50/80';
   } else if (!isProfitable) {
-    return 'bg-red-50/40 hover:bg-red-50/60';
+    return 'bg-red-50/60 hover:bg-red-50/80';
   }
   return 'hover:bg-gray-50/60';
 };
