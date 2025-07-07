@@ -64,9 +64,9 @@ const PerformanceTable = ({ productId, timeFrame }: PerformanceTableProps) => {
         <CardTitle className="text-xl text-gray-800">Monthly Performance Breakdown</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-white/95 backdrop-blur shadow-sm z-10">
               <TableRow>
                 <TableHead className="w-24">Month</TableHead>
                 <TableHead className="text-right">Revenue</TableHead>
