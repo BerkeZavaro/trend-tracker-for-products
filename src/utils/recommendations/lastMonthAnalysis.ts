@@ -14,7 +14,7 @@ export const analyzeLastMonth = (
         totalCosts: 0,
         profit: 0,
         profitMargin: 0,
-        cpa: 0,
+        adjustedCpa: 0,
         avgSale: 0,
         orders: 0
       },
@@ -22,7 +22,7 @@ export const analyzeLastMonth = (
       monthOverMonthChange: {
         revenue: 0,
         profit: 0,
-        cpa: 0,
+        adjustedCpa: 0,
         orders: 0
       },
       isOutlier: false,
@@ -39,7 +39,6 @@ export const analyzeLastMonth = (
   const totalCosts = lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts;
   const profit = lastMonth.revenue - totalCosts;
   const profitMargin = lastMonth.revenue > 0 ? (profit / lastMonth.revenue) * 100 : 0;
-  const cpa = lastMonth.orders > 0 ? totalCosts / lastMonth.orders : 0;
   const avgSale = lastMonth.orders > 0 ? lastMonth.revenue / lastMonth.orders : 0;
 
   const lastMonthMetrics: LastMonthMetrics = {
@@ -47,7 +46,7 @@ export const analyzeLastMonth = (
     totalCosts,
     profit,
     profitMargin,
-    cpa,
+    adjustedCpa: lastMonth.adjustedCpa,
     avgSale,
     orders: lastMonth.orders
   };
@@ -56,7 +55,7 @@ export const analyzeLastMonth = (
   const monthOverMonthChange: MonthOverMonthChange = {
     revenue: previousMonth ? ((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue) * 100 : 0,
     profit: previousMonth ? ((profit - (previousMonth.revenue - (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts))) / (previousMonth.revenue - (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts))) * 100 : 0,
-    cpa: previousMonth && previousMonth.orders > 0 ? ((cpa - ((previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders)) / ((previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders)) * 100 : 0,
+    adjustedCpa: previousMonth && previousMonth.adjustedCpa > 0 ? ((lastMonth.adjustedCpa - previousMonth.adjustedCpa) / previousMonth.adjustedCpa) * 100 : 0,
     orders: previousMonth ? ((lastMonth.orders - previousMonth.orders) / previousMonth.orders) * 100 : 0
   };
 

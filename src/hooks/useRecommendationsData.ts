@@ -75,14 +75,11 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
       quickWins.push(`Last month (${lastMonth.month}) revenue grew ${improvement}% to $${lastMonth.revenue.toLocaleString()}`);
     }
     
-    // Last month CPA efficiency
-    if (previousMonth && lastMonth.orders > 0 && previousMonth.orders > 0) {
-      const lastCPA = (lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts) / lastMonth.orders;
-      const prevCPA = (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders;
-      
-      if (lastCPA < prevCPA) {
-        const improvement = ((prevCPA - lastCPA) / prevCPA * 100).toFixed(1);
-        quickWins.push(`Last month CPA improved ${improvement}% to $${lastCPA.toFixed(2)} per order`);
+    // Last month Adjusted CPA efficiency
+    if (previousMonth && lastMonth.adjustedCpa > 0 && previousMonth.adjustedCpa > 0) {
+      if (lastMonth.adjustedCpa < previousMonth.adjustedCpa) {
+        const improvement = ((previousMonth.adjustedCpa - lastMonth.adjustedCpa) / previousMonth.adjustedCpa * 100).toFixed(1);
+        quickWins.push(`Last month Adjusted CPA improved ${improvement}% to $${lastMonth.adjustedCpa.toFixed(2)} per order`);
       }
     }
 

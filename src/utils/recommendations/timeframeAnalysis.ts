@@ -13,7 +13,7 @@ export const analyzeTimeframe = (
         totalRevenue: 0,
         avgProfit: 0,
         avgProfitMargin: 0,
-        avgCpa: 0,
+        avgAdjustedCpa: 0,
         totalOrders: 0,
         monthCount: 0,
         revenueGrowthRate: 0,
@@ -41,11 +41,9 @@ export const analyzeTimeframe = (
   const avgProfit = profits.reduce((sum, profit) => sum + profit, 0) / profits.length;
   const avgProfitMargin = avgRevenue > 0 ? (avgProfit / avgRevenue) * 100 : 0;
   
-  const cpas = sortedData.map(item => {
-    const costs = item.adSpend + item.nonAdCosts + item.thirdPartyCosts;
-    return item.orders > 0 ? costs / item.orders : 0;
-  }).filter(cpa => cpa > 0);
-  const avgCpa = cpas.length > 0 ? cpas.reduce((sum, cpa) => sum + cpa, 0) / cpas.length : 0;
+  // Use adjusted CPA values from data
+  const adjustedCpas = sortedData.filter(item => item.adjustedCpa > 0).map(item => item.adjustedCpa);
+  const avgAdjustedCpa = adjustedCpas.length > 0 ? adjustedCpas.reduce((sum, cpa) => sum + cpa, 0) / adjustedCpas.length : 0;
   
   const totalOrders = sortedData.reduce((sum, item) => sum + item.orders, 0);
   
@@ -74,7 +72,7 @@ export const analyzeTimeframe = (
     totalRevenue,
     avgProfit,
     avgProfitMargin,
-    avgCpa,
+    avgAdjustedCpa,
     totalOrders,
     monthCount: sortedData.length,
     revenueGrowthRate,

@@ -1,3 +1,4 @@
+
 import { ProductData } from '@/contexts/DataContext';
 import { EnhancedRecommendation, LastMonthAnalysis, TimeframeAnalysis } from '@/types/recommendations';
 import { analyzeTimeSeries, generatePredictions } from '@/utils/advancedAnalytics';
@@ -35,7 +36,7 @@ export const generateRecommendationsFromAnalysis = (
     priority: lastMonthAnalysis.lastMonthMetrics.profitMargin < 15 ? 'high' : 'medium',
     title: `Last Month Performance: ${performanceGrade.grade}`,
     description: `${lastMonthAnalysis.lastMonth.month} generated $${lastMonthAnalysis.lastMonthMetrics.revenue.toLocaleString()} in revenue with ${lastMonthAnalysis.lastMonthMetrics.profitMargin.toFixed(1)}% profit margin.${contextNote}`,
-    dataInsight: `Revenue: $${lastMonthAnalysis.lastMonthMetrics.revenue.toLocaleString()}, Profit: $${lastMonthAnalysis.lastMonthMetrics.profit.toLocaleString()}, CPA: $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}, Orders: ${lastMonthAnalysis.lastMonthMetrics.orders}`,
+    dataInsight: `Revenue: $${lastMonthAnalysis.lastMonthMetrics.revenue.toLocaleString()}, Profit: $${lastMonthAnalysis.lastMonthMetrics.profit.toLocaleString()}, Adjusted CPA: $${lastMonthAnalysis.lastMonthMetrics.adjustedCpa.toFixed(2)}, Orders: ${lastMonthAnalysis.lastMonthMetrics.orders}`,
     action: performanceGrade.action,
     expectedImpact: performanceGrade.impact,
     timeframe: 'next-month',
@@ -87,16 +88,16 @@ export const generateRecommendationsFromAnalysis = (
 
   // Cost efficiency analysis based on last month
   const lastMonthCpaToSaleRatio = lastMonthAnalysis.lastMonthMetrics.avgSale > 0 ? 
-    lastMonthAnalysis.lastMonthMetrics.cpa / lastMonthAnalysis.lastMonthMetrics.avgSale : 0;
+    lastMonthAnalysis.lastMonthMetrics.adjustedCpa / lastMonthAnalysis.lastMonthMetrics.avgSale : 0;
   
   if (lastMonthCpaToSaleRatio > 0) {
     if (lastMonthCpaToSaleRatio < 0.4) {
       recommendations.push({
         type: 'opportunity',
         priority: 'high',
-        title: 'Excellent Cost Efficiency Last Month',
+        title: 'Excellent Adjusted CPA Efficiency Last Month',
         description: `${lastMonthAnalysis.lastMonth.month} showed very efficient acquisition costs relative to sale value.`,
-        dataInsight: `Last month CPA: $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}, Average sale: $${lastMonthAnalysis.lastMonthMetrics.avgSale.toFixed(2)} (${(lastMonthCpaToSaleRatio * 100).toFixed(1)}% ratio)`,
+        dataInsight: `Last month Adjusted CPA: $${lastMonthAnalysis.lastMonthMetrics.adjustedCpa.toFixed(2)}, Average sale: $${lastMonthAnalysis.lastMonthMetrics.avgSale.toFixed(2)} (${(lastMonthCpaToSaleRatio * 100).toFixed(1)}% ratio)`,
         action: 'Scale marketing spend by 30-50% while maintaining current targeting and creative strategies',
         expectedImpact: 'Increase revenue by 40-60% while maintaining profitability',
         timeframe: 'immediate',
@@ -108,9 +109,9 @@ export const generateRecommendationsFromAnalysis = (
       recommendations.push({
         type: 'warning',
         priority: lastMonthCpaToSaleRatio > 0.8 ? 'critical' : 'high',
-        title: 'High Acquisition Costs Last Month',
-        description: `${lastMonthAnalysis.lastMonth.month} showed concerning cost efficiency with high CPA relative to sale value.`,
-        dataInsight: `Last month CPA: $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}, Average sale: $${lastMonthAnalysis.lastMonthMetrics.avgSale.toFixed(2)} (${(lastMonthCpaToSaleRatio * 100).toFixed(1)}% ratio)`,
+        title: 'High Adjusted CPA Last Month',
+        description: `${lastMonthAnalysis.lastMonth.month} showed concerning cost efficiency with high Adjusted CPA relative to sale value.`,
+        dataInsight: `Last month Adjusted CPA: $${lastMonthAnalysis.lastMonthMetrics.adjustedCpa.toFixed(2)}, Average sale: $${lastMonthAnalysis.lastMonthMetrics.avgSale.toFixed(2)} (${(lastMonthCpaToSaleRatio * 100).toFixed(1)}% ratio)`,
         action: 'Immediate optimization of ad targeting, pause underperforming campaigns, or review pricing strategy',
         expectedImpact: 'Reduce costs and improve profit margins by 20-30%',
         timeframe: 'immediate',
@@ -121,18 +122,18 @@ export const generateRecommendationsFromAnalysis = (
     }
   }
 
-  // CPA trend analysis (if previous month exists)
-  if (lastMonthAnalysis.previousMonth && Math.abs(lastMonthAnalysis.monthOverMonthChange.cpa) > 10) {
-    const cpaImproved = lastMonthAnalysis.monthOverMonthChange.cpa < 0;
-    const cpaChange = Math.abs(lastMonthAnalysis.monthOverMonthChange.cpa);
+  // Adjusted CPA trend analysis (if previous month exists)
+  if (lastMonthAnalysis.previousMonth && Math.abs(lastMonthAnalysis.monthOverMonthChange.adjustedCpa) > 10) {
+    const cpaImproved = lastMonthAnalysis.monthOverMonthChange.adjustedCpa < 0;
+    const cpaChange = Math.abs(lastMonthAnalysis.monthOverMonthChange.adjustedCpa);
     
     recommendations.push({
       type: cpaImproved ? 'opportunity' : 'warning',
       priority: cpaChange > 25 ? 'high' : 'medium',
-      title: `CPA ${cpaImproved ? 'Improved' : 'Worsened'} Last Month`,
-      description: `Cost per acquisition ${cpaImproved ? 'decreased' : 'increased'} ${cpaChange.toFixed(1)}% from previous month.`,
-      dataInsight: `CPA change: ${lastMonthAnalysis.previousMonth.month} $${((lastMonthAnalysis.previousMonth.adSpend + lastMonthAnalysis.previousMonth.nonAdCosts + lastMonthAnalysis.previousMonth.thirdPartyCosts) / Math.max(1, lastMonthAnalysis.previousMonth.orders)).toFixed(2)} → ${lastMonthAnalysis.lastMonth.month} $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}`,
-      action: cpaImproved ? 'Analyze what drove CPA improvement and replicate those tactics' : 'Investigate CPA increase and optimize underperforming channels',
+      title: `Adjusted CPA ${cpaImproved ? 'Improved' : 'Worsened'} Last Month`,
+      description: `Adjusted CPA ${cpaImproved ? 'decreased' : 'increased'} ${cpaChange.toFixed(1)}% from previous month.`,
+      dataInsight: `Adjusted CPA change: ${lastMonthAnalysis.previousMonth.month} $${lastMonthAnalysis.previousMonth.adjustedCpa.toFixed(2)} → ${lastMonthAnalysis.lastMonth.month} $${lastMonthAnalysis.lastMonthMetrics.adjustedCpa.toFixed(2)}`,
+      action: cpaImproved ? 'Analyze what drove Adjusted CPA improvement and replicate those tactics' : 'Investigate Adjusted CPA increase and optimize underperforming channels',
       expectedImpact: cpaImproved ? 'Maintain efficient acquisition costs' : 'Restore cost efficiency',
       timeframe: 'immediate',
       icon: cpaImproved ? Target : AlertTriangle,

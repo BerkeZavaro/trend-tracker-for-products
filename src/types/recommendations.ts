@@ -21,7 +21,7 @@ export interface LastMonthMetrics {
   totalCosts: number;
   profit: number;
   profitMargin: number;
-  cpa: number;
+  adjustedCpa: number;
   avgSale: number;
   orders: number;
 }
@@ -31,7 +31,7 @@ export interface TimeframeMetrics {
   totalRevenue: number;
   avgProfit: number;
   avgProfitMargin: number;
-  avgCpa: number;
+  avgAdjustedCpa: number;
   totalOrders: number;
   monthCount: number;
   revenueGrowthRate: number;
@@ -43,7 +43,7 @@ export interface TimeframeMetrics {
 export interface MonthOverMonthChange {
   revenue: number;
   profit: number;
-  cpa: number;
+  adjustedCpa: number;
   orders: number;
 }
 
