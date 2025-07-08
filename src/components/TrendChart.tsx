@@ -206,6 +206,8 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
         data={data}
         metric={metric}
         title={`${isRevenue ? 'Revenue' : 'CPA'} Trend - Fullscreen View`}
+        trend={trend}
+        trendPercent={trendPercent}
       />
     </>
   );

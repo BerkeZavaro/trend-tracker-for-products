@@ -1,8 +1,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Line } from 'recharts';
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import ChartTooltip from './ChartTooltip';
 import TrendLegend from './TrendLegend';
 import { formatValue } from '@/utils/chartUtils';
@@ -17,9 +16,11 @@ interface ChartModalProps {
   }>;
   metric: 'revenue' | 'cpa';
   title: string;
+  trend: 'up' | 'down';
+  trendPercent: number;
 }
 
-const ChartModal = ({ isOpen, onClose, data, metric, title }: ChartModalProps) => {
+const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent }: ChartModalProps) => {
   const isRevenue = metric === 'revenue';
 
   return (
@@ -27,15 +28,23 @@ const ChartModal = ({ isOpen, onClose, data, metric, title }: ChartModalProps) =
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-6">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-xl font-semibold flex items-center justify-between">
-            {title}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-8 w-8 p-0 hover:bg-gray-100"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-4">
+              <span>{title}</span>
+              <div className="flex items-center gap-2">
+                {trend === 'up' ? (
+                  <TrendingUp className={`w-5 h-5 ${isRevenue ? 'text-green-600' : 'text-red-600'}`} />
+                ) : (
+                  <TrendingDown className={`w-5 h-5 ${isRevenue ? 'text-red-600' : 'text-green-600'}`} />
+                )}
+                <span className={`text-lg font-medium ${
+                  (isRevenue && trend === 'up') || (!isRevenue && trend === 'down') 
+                    ? 'text-green-600' 
+                    : 'text-red-600'
+                }`}>
+                  {trendPercent.toFixed(1)}%
+                </span>
+              </div>
+            </div>
           </DialogTitle>
         </DialogHeader>
         
