@@ -1,18 +1,25 @@
-
 import { ProductData } from '@/contexts/DataContext';
-import { EnhancedRecommendation, LastMonthAnalysis } from '@/types/recommendations';
+import { EnhancedRecommendation, LastMonthAnalysis, TimeframeAnalysis } from '@/types/recommendations';
 import { analyzeTimeSeries, generatePredictions } from '@/utils/advancedAnalytics';
 import { getPerformanceGrade } from './performanceGrading';
+import { generateTimeframeRecommendations } from './timeframeRecommendations';
 import { AlertTriangle, TrendingUp, Target, Lightbulb, Calendar, Zap, BarChart3 } from 'lucide-react';
 
 export const generateRecommendationsFromAnalysis = (
   lastMonthAnalysis: LastMonthAnalysis,
+  timeframeAnalysis: TimeframeAnalysis,
   filteredData: ProductData[],
   allData: ProductData[],
-  uploadedData: ProductData[]
+  uploadedData: ProductData[],
+  timeFrame: { start: string; end: string }
 ): EnhancedRecommendation[] => {
   const recommendations: EnhancedRecommendation[] = [];
   
+  // Generate timeframe-based recommendations first
+  const timeframeRecommendations = generateTimeframeRecommendations(timeframeAnalysis, filteredData, timeFrame);
+  recommendations.push(...timeframeRecommendations);
+  
+  // If no last month data, return only timeframe recommendations
   if (!lastMonthAnalysis.lastMonth) {
     return recommendations;
   }
@@ -33,8 +40,30 @@ export const generateRecommendationsFromAnalysis = (
     expectedImpact: performanceGrade.impact,
     timeframe: 'next-month',
     icon: BarChart3,
-    color: performanceGrade.color
+    color: performanceGrade.color,
+    source: 'last-month'
   });
+
+  // Validation: Compare last month to timeframe average
+  if (timeframeAnalysis.timeframeMetrics.monthCount > 1) {
+    const lastMonthVsAvg = ((lastMonthAnalysis.lastMonthMetrics.revenue - timeframeAnalysis.timeframeMetrics.avgRevenue) / timeframeAnalysis.timeframeMetrics.avgRevenue) * 100;
+    
+    if (Math.abs(lastMonthVsAvg) > 15) {
+      recommendations.push({
+        type: 'tactical',
+        priority: Math.abs(lastMonthVsAvg) > 30 ? 'high' : 'medium',
+        title: `Last Month ${lastMonthVsAvg > 0 ? 'Outperformed' : 'Underperformed'} Period Average`,
+        description: `${lastMonthAnalysis.lastMonth.month} revenue was ${Math.abs(lastMonthVsAvg).toFixed(1)}% ${lastMonthVsAvg > 0 ? 'above' : 'below'} your ${timeframeAnalysis.timeframeMetrics.monthCount}-month average.`,
+        dataInsight: `Last month: $${lastMonthAnalysis.lastMonthMetrics.revenue.toLocaleString()}, Period average: $${timeframeAnalysis.timeframeMetrics.avgRevenue.toLocaleString()} (${lastMonthVsAvg > 0 ? '+' : ''}${lastMonthVsAvg.toFixed(1)}%)`,
+        action: lastMonthVsAvg > 0 ? 'Analyze what drove above-average performance to replicate success' : 'Investigate underperformance factors and course-correct quickly',
+        expectedImpact: lastMonthVsAvg > 0 ? 'Maintain momentum from strong performance' : 'Return to average or above-average performance levels',
+        timeframe: 'immediate',
+        icon: lastMonthVsAvg > 0 ? TrendingUp : AlertTriangle,
+        color: lastMonthVsAvg > 0 ? 'green' : 'orange',
+        source: 'validation'
+      });
+    }
+  }
 
   // Month-over-month trend analysis (if previous month exists)
   if (lastMonthAnalysis.previousMonth && Math.abs(lastMonthAnalysis.monthOverMonthChange.revenue) > 5) {
@@ -51,7 +80,8 @@ export const generateRecommendationsFromAnalysis = (
       expectedImpact: isPositive ? 'Maintain growth momentum' : 'Prevent further revenue decline',
       timeframe: 'immediate',
       icon: isPositive ? TrendingUp : AlertTriangle,
-      color: isPositive ? 'green' : 'orange'
+      color: isPositive ? 'green' : 'orange',
+      source: 'last-month'
     });
   }
 
@@ -71,7 +101,8 @@ export const generateRecommendationsFromAnalysis = (
         expectedImpact: 'Increase revenue by 40-60% while maintaining profitability',
         timeframe: 'immediate',
         icon: Target,
-        color: 'green'
+        color: 'green',
+        source: 'last-month'
       });
     } else if (lastMonthCpaToSaleRatio > 0.6) {
       recommendations.push({
@@ -84,7 +115,8 @@ export const generateRecommendationsFromAnalysis = (
         expectedImpact: 'Reduce costs and improve profit margins by 20-30%',
         timeframe: 'immediate',
         icon: AlertTriangle,
-        color: 'red'
+        color: 'red',
+        source: 'last-month'
       });
     }
   }
@@ -104,7 +136,8 @@ export const generateRecommendationsFromAnalysis = (
       expectedImpact: cpaImproved ? 'Maintain efficient acquisition costs' : 'Restore cost efficiency',
       timeframe: 'immediate',
       icon: cpaImproved ? Target : AlertTriangle,
-      color: cpaImproved ? 'green' : 'orange'
+      color: cpaImproved ? 'green' : 'orange',
+      source: 'last-month'
     });
   }
 
@@ -125,7 +158,8 @@ export const generateRecommendationsFromAnalysis = (
         expectedImpact: 'Maximize seasonal revenue opportunity',
         timeframe: 'next-month',
         icon: Calendar,
-        color: 'purple'
+        color: 'purple',
+        source: 'validation'
       });
     } else if (isWorstSeason) {
       recommendations.push({
@@ -138,7 +172,8 @@ export const generateRecommendationsFromAnalysis = (
         expectedImpact: 'Maintain profitability during slower period',
         timeframe: 'next-month',
         icon: Lightbulb,
-        color: 'blue'
+        color: 'blue',
+        source: 'validation'
       });
     }
   }
@@ -159,13 +194,19 @@ export const generateRecommendationsFromAnalysis = (
       expectedImpact: 'Proactively manage expected performance changes',
       timeframe: 'next-month',
       icon: Zap,
-      color: isPositivePrediction ? 'green' : 'orange'
+      color: isPositivePrediction ? 'green' : 'orange',
+      source: 'validation'
     });
   }
 
-  // Sort by priority and return top recommendations
+  // Sort by priority and return balanced recommendations (mix of sources)
   const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
-  return recommendations
-    .sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])
-    .slice(0, 6);
+  const sortedRecommendations = recommendations.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+  
+  // Ensure we have a good mix of recommendation sources
+  const timeframeRecs = sortedRecommendations.filter(r => r.source === 'timeframe').slice(0, 2);
+  const lastMonthRecs = sortedRecommendations.filter(r => r.source === 'last-month').slice(0, 3);
+  const validationRecs = sortedRecommendations.filter(r => r.source === 'validation').slice(0, 2);
+  
+  return [...timeframeRecs, ...lastMonthRecs, ...validationRecs].slice(0, 7);
 };

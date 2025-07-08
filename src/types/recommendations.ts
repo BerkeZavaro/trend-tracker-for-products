@@ -13,6 +13,7 @@ export interface EnhancedRecommendation {
   timeframe: 'immediate' | 'next-month' | 'next-quarter';
   icon: LucideIcon;
   color: string;
+  source: 'last-month' | 'timeframe' | 'validation'; // New field to identify recommendation source
 }
 
 export interface LastMonthMetrics {
@@ -23,6 +24,20 @@ export interface LastMonthMetrics {
   cpa: number;
   avgSale: number;
   orders: number;
+}
+
+export interface TimeframeMetrics {
+  avgRevenue: number;
+  totalRevenue: number;
+  avgProfit: number;
+  avgProfitMargin: number;
+  avgCpa: number;
+  totalOrders: number;
+  monthCount: number;
+  revenueGrowthRate: number;
+  bestMonth: ProductData;
+  worstMonth: ProductData;
+  consistencyScore: number;
 }
 
 export interface MonthOverMonthChange {
@@ -39,6 +54,13 @@ export interface LastMonthAnalysis {
   monthOverMonthChange: MonthOverMonthChange;
   isOutlier: boolean;
   outlierReason: string;
+}
+
+export interface TimeframeAnalysis {
+  timeframeMetrics: TimeframeMetrics;
+  trendDirection: 'improving' | 'declining' | 'stable';
+  seasonalPatterns: string[];
+  performanceConsistency: 'high' | 'medium' | 'low';
 }
 
 export interface PerformanceGrade {

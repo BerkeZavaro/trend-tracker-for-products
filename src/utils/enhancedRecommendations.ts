@@ -2,6 +2,7 @@
 import { ProductData } from '@/contexts/DataContext';
 import { EnhancedRecommendation } from '@/types/recommendations';
 import { analyzeLastMonth } from './recommendations/lastMonthAnalysis';
+import { analyzeTimeframe } from './recommendations/timeframeAnalysis';
 import { generateRecommendationsFromAnalysis } from './recommendations/recommendationGenerator';
 import { AlertTriangle } from 'lucide-react';
 
@@ -24,18 +25,24 @@ export const generateEnhancedRecommendations = (
       expectedImpact: 'Enable proper analysis',
       timeframe: 'immediate',
       icon: AlertTriangle,
-      color: 'orange'
+      color: 'orange',
+      source: 'validation'
     }];
   }
 
   const lastMonthAnalysis = analyzeLastMonth(filteredData, allData);
   console.log('Last month analysis:', lastMonthAnalysis);
 
+  const timeframeAnalysis = analyzeTimeframe(filteredData, allData);
+  console.log('Timeframe analysis:', timeframeAnalysis);
+
   return generateRecommendationsFromAnalysis(
     lastMonthAnalysis,
+    timeframeAnalysis,
     filteredData,
     allData,
-    uploadedData
+    uploadedData,
+    timeFrame
   );
 };
 
