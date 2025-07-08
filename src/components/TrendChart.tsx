@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
@@ -8,6 +7,7 @@ import { normalizeDate, calculateTrend, formatValue } from '@/utils/chartUtils';
 import ChartTooltip from '@/components/chart/ChartTooltip';
 import TrendHeader from '@/components/chart/TrendHeader';
 import TrendLegend from '@/components/chart/TrendLegend';
+import ChartModal from '@/components/chart/ChartModal';
 
 interface TrendChartProps {
   productId: string;
@@ -19,6 +19,7 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   const { getProductData, uploadedData } = useData();
   const productData = getProductData(productId);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filter data for the selected time frame using enhanced date logic
   const filteredData = productData.filter(item => 
@@ -102,6 +103,14 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
     setIsExpanded(!isExpanded);
   };
 
+  const handleOpenFullscreen = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   // Don't render if no data
   if (data.length === 0) {
     return (
@@ -115,11 +124,12 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
               trendPercent={trendPercent}
               isExpanded={isExpanded}
               onToggleExpand={handleToggleExpand}
+              onOpenFullscreen={handleOpenFullscreen}
             />
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={`${isExpanded ? 'h-96' : 'h-64'} flex items-center justify-center text-gray-500 transition-all duration-300`}>
+          <div className={`${isExpanded ? 'h-[500px]' : 'h-64'} flex items-center justify-center text-gray-500 transition-all duration-300`}>
             No data available for the selected time frame
           </div>
         </CardContent>
@@ -128,65 +138,76 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   }
 
   return (
-    <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg text-gray-800">
-          <TrendHeader 
-            isRevenue={isRevenue}
-            hasData={data.length > 0}
-            trend={trend}
-            trendPercent={trendPercent}
-            isExpanded={isExpanded}
-            onToggleExpand={handleToggleExpand}
-          />
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className={`${isExpanded ? 'h-96' : 'h-64'} transition-all duration-300`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <defs>
-                <linearGradient id={`${metric}Gradient`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={isRevenue ? "#10b981" : "#3b82f6"} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={isRevenue ? "#10b981" : "#3b82f6"} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis 
-                dataKey="month" 
-                tick={{ fontSize: 12 }}
-                stroke="#6b7280"
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                tick={{ fontSize: 12 }}
-                stroke="#6b7280"
-                tickFormatter={(value) => formatValue(value, isRevenue)}
-              />
-              <Tooltip content={<ChartTooltip isRevenue={isRevenue} />} />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke={isRevenue ? "#10b981" : "#3b82f6"}
-                strokeWidth={2}
-                fill={`url(#${metric}Gradient)`}
-              />
-              <Line
-                type="monotone"
-                dataKey="previousYear"
-                stroke="#9ca3af"
-                strokeWidth={1}
-                strokeDasharray="5 5"
-                dot={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <TrendLegend isRevenue={isRevenue} />
-      </CardContent>
-    </Card>
+    <>
+      <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg text-gray-800">
+            <TrendHeader 
+              isRevenue={isRevenue}
+              hasData={data.length > 0}
+              trend={trend}
+              trendPercent={trendPercent}
+              isExpanded={isExpanded}
+              onToggleExpand={handleToggleExpand}
+              onOpenFullscreen={handleOpenFullscreen}
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className={`${isExpanded ? 'h-[500px]' : 'h-64'} transition-all duration-300`}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id={`${metric}Gradient`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={isRevenue ? "#10b981" : "#3b82f6"} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={isRevenue ? "#10b981" : "#3b82f6"} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12 }}
+                  stroke="#6b7280"
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }}
+                  stroke="#6b7280"
+                  tickFormatter={(value) => formatValue(value, isRevenue)}
+                />
+                <Tooltip content={<ChartTooltip isRevenue={isRevenue} />} />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={isRevenue ? "#10b981" : "#3b82f6"}
+                  strokeWidth={2}
+                  fill={`url(#${metric}Gradient)`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="previousYear"
+                  stroke="#9ca3af"
+                  strokeWidth={1}
+                  strokeDasharray="5 5"
+                  dot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <TrendLegend isRevenue={isRevenue} />
+        </CardContent>
+      </Card>
+
+      <ChartModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        data={data}
+        metric={metric}
+        title={`${isRevenue ? 'Revenue' : 'CPA'} Trend - Fullscreen View`}
+      />
+    </>
   );
 };
 
