@@ -1,4 +1,3 @@
-
 import { ProductData } from '@/contexts/DataContext';
 import { analyzeTimeSeries, generatePredictions, TimeSeriesAnalysis } from './advancedAnalytics';
 import { AlertTriangle, TrendingUp, Target, Lightbulb, Calendar, DollarSign, BarChart3, Zap } from 'lucide-react';
@@ -252,30 +251,23 @@ const calculateCurrentMetrics = (data: ProductData[]) => {
 };
 
 const getPerformanceGrade = (metrics: ReturnType<typeof calculateCurrentMetrics>) => {
-  if (metrics.profitMargin > 25) {
+  if (metrics.profitMargin >= 35) {
     return {
       grade: 'Excellent',
       action: 'Consider scaling investment to maximize growth potential',
       impact: 'Accelerate growth while maintaining strong margins',
       color: 'green'
     };
-  } else if (metrics.profitMargin > 15) {
+  } else if (metrics.profitMargin >= 25) {
     return {
       grade: 'Good',
       action: 'Focus on efficiency improvements and selective scaling',
       impact: 'Optimize performance and identify growth opportunities',
       color: 'blue'
     };
-  } else if (metrics.profitMargin > 5) {
-    return {
-      grade: 'Fair',
-      action: 'Review cost structure and optimize underperforming areas',
-      impact: 'Improve profitability and competitive position',
-      color: 'orange'
-    };
   } else {
     return {
-      grade: 'Needs Improvement',
+      grade: 'Poor',
       action: 'Immediate cost optimization and strategy review required',
       impact: 'Restore profitability and business sustainability',
       color: 'red'
