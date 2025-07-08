@@ -1,3 +1,4 @@
+
 import { ProductData } from '@/contexts/DataContext';
 import { analyzeTimeSeries, generatePredictions, TimeSeriesAnalysis } from './advancedAnalytics';
 import { AlertTriangle, TrendingUp, Target, Lightbulb, Calendar, DollarSign, BarChart3, Zap } from 'lucide-react';
@@ -14,6 +15,122 @@ export interface EnhancedRecommendation {
   icon: any;
   color: string;
 }
+
+interface LastMonthAnalysis {
+  lastMonth: ProductData | null;
+  lastMonthMetrics: {
+    revenue: number;
+    totalCosts: number;
+    profit: number;
+    profitMargin: number;
+    cpa: number;
+    avgSale: number;
+    orders: number;
+  };
+  previousMonth: ProductData | null;
+  monthOverMonthChange: {
+    revenue: number;
+    profit: number;
+    cpa: number;
+    orders: number;
+  };
+  isOutlier: boolean;
+  outlierReason: string;
+}
+
+const analyzeLastMonth = (
+  filteredData: ProductData[],
+  allData: ProductData[]
+): LastMonthAnalysis => {
+  if (filteredData.length === 0) {
+    return {
+      lastMonth: null,
+      lastMonthMetrics: {
+        revenue: 0,
+        totalCosts: 0,
+        profit: 0,
+        profitMargin: 0,
+        cpa: 0,
+        avgSale: 0,
+        orders: 0
+      },
+      previousMonth: null,
+      monthOverMonthChange: {
+        revenue: 0,
+        profit: 0,
+        cpa: 0,
+        orders: 0
+      },
+      isOutlier: false,
+      outlierReason: ''
+    };
+  }
+
+  // Sort by date to get the actual last month
+  const sortedData = [...filteredData].sort((a, b) => a.month.localeCompare(b.month));
+  const lastMonth = sortedData[sortedData.length - 1];
+  const previousMonth = sortedData.length > 1 ? sortedData[sortedData.length - 2] : null;
+
+  // Calculate last month metrics
+  const totalCosts = lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts;
+  const profit = lastMonth.revenue - totalCosts;
+  const profitMargin = lastMonth.revenue > 0 ? (profit / lastMonth.revenue) * 100 : 0;
+  const cpa = lastMonth.orders > 0 ? totalCosts / lastMonth.orders : 0;
+  const avgSale = lastMonth.orders > 0 ? lastMonth.revenue / lastMonth.orders : 0;
+
+  const lastMonthMetrics = {
+    revenue: lastMonth.revenue,
+    totalCosts,
+    profit,
+    profitMargin,
+    cpa,
+    avgSale,
+    orders: lastMonth.orders
+  };
+
+  // Calculate month-over-month changes
+  const monthOverMonthChange = {
+    revenue: previousMonth ? ((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue) * 100 : 0,
+    profit: previousMonth ? ((profit - (previousMonth.revenue - (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts))) / (previousMonth.revenue - (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts))) * 100 : 0,
+    cpa: previousMonth && previousMonth.orders > 0 ? ((cpa - ((previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders)) / ((previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders)) * 100 : 0,
+    orders: previousMonth ? ((lastMonth.orders - previousMonth.orders) / previousMonth.orders) * 100 : 0
+  };
+
+  // Check if last month is an outlier compared to timeframe average
+  const timeframeAvgRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0) / filteredData.length;
+  const revenueDeviation = Math.abs((lastMonth.revenue - timeframeAvgRevenue) / timeframeAvgRevenue) * 100;
+  
+  let isOutlier = false;
+  let outlierReason = '';
+  
+  if (revenueDeviation > 50) {
+    isOutlier = true;
+    outlierReason = `Last month revenue (${lastMonth.revenue.toLocaleString()}) deviates ${revenueDeviation.toFixed(1)}% from timeframe average (${timeframeAvgRevenue.toLocaleString()})`;
+  }
+
+  // Check seasonality patterns from historical data
+  const [year, month] = lastMonth.month.split('-');
+  const sameMonthHistorical = allData.filter(item => item.month.endsWith(`-${month}`) && item.month !== lastMonth.month);
+  
+  if (sameMonthHistorical.length > 0) {
+    const historicalAvg = sameMonthHistorical.reduce((sum, item) => sum + item.revenue, 0) / sameMonthHistorical.length;
+    const seasonalDeviation = Math.abs((lastMonth.revenue - historicalAvg) / historicalAvg) * 100;
+    
+    if (seasonalDeviation > 30 && !isOutlier) {
+      isOutlier = true;
+      outlierReason = `Last month performance differs ${seasonalDeviation.toFixed(1)}% from historical ${month} average`;
+    }
+  }
+
+  return {
+    lastMonth,
+    lastMonthMetrics,
+    previousMonth,
+    monthOverMonthChange,
+    isOutlier,
+    outlierReason
+  };
+};
 
 export const generateEnhancedRecommendations = (
   filteredData: ProductData[],
@@ -38,24 +155,26 @@ export const generateEnhancedRecommendations = (
     }];
   }
 
+  const lastMonthAnalysis = analyzeLastMonth(filteredData, allData);
   const analysis = analyzeTimeSeries(filteredData, allData, uploadedData);
-  const predictions = generatePredictions(analysis);
   const recommendations: EnhancedRecommendation[] = [];
-  const currentMetrics = calculateCurrentMetrics(filteredData);
 
-  console.log('Current metrics:', currentMetrics);
-  console.log('Analysis trends:', analysis.trends);
+  console.log('Last month analysis:', lastMonthAnalysis);
 
-  // Always provide performance overview
-  const latestMonth = filteredData[filteredData.length - 1];
-  const performanceGrade = getPerformanceGrade(currentMetrics);
+  if (!lastMonthAnalysis.lastMonth) {
+    return recommendations;
+  }
+
+  // Primary recommendation based on last month's performance grade
+  const performanceGrade = getPerformanceGrade(lastMonthAnalysis.lastMonthMetrics);
+  const contextNote = lastMonthAnalysis.isOutlier ? ` (Note: ${lastMonthAnalysis.outlierReason})` : '';
   
   recommendations.push({
     type: 'opportunity',
-    priority: 'medium',
-    title: `Current Performance: ${performanceGrade.grade}`,
-    description: `Your product generated $${currentMetrics.totalRevenue.toLocaleString()} in revenue over the selected period.`,
-    dataInsight: `Average monthly revenue: $${currentMetrics.avgRevenue.toLocaleString()}, Profit margin: ${currentMetrics.profitMargin.toFixed(1)}%`,
+    priority: lastMonthAnalysis.lastMonthMetrics.profitMargin < 15 ? 'high' : 'medium',
+    title: `Last Month Performance: ${performanceGrade.grade}`,
+    description: `${lastMonthAnalysis.lastMonth.month} generated $${lastMonthAnalysis.lastMonthMetrics.revenue.toLocaleString()} in revenue with ${lastMonthAnalysis.lastMonthMetrics.profitMargin.toFixed(1)}% profit margin.${contextNote}`,
+    dataInsight: `Revenue: $${lastMonthAnalysis.lastMonthMetrics.revenue.toLocaleString()}, Profit: $${lastMonthAnalysis.lastMonthMetrics.profit.toLocaleString()}, CPA: $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}, Orders: ${lastMonthAnalysis.lastMonthMetrics.orders}`,
     action: performanceGrade.action,
     expectedImpact: performanceGrade.impact,
     timeframe: 'next-month',
@@ -63,57 +182,52 @@ export const generateEnhancedRecommendations = (
     color: performanceGrade.color
   });
 
-  // Month-to-month analysis (if we have multiple months)
-  if (filteredData.length >= 2) {
-    const sortedData = [...filteredData].sort((a, b) => a.month.localeCompare(b.month));
-    const lastMonth = sortedData[sortedData.length - 1];
-    const previousMonth = sortedData[sortedData.length - 2];
+  // Month-over-month trend analysis (if previous month exists)
+  if (lastMonthAnalysis.previousMonth && Math.abs(lastMonthAnalysis.monthOverMonthChange.revenue) > 5) {
+    const isPositive = lastMonthAnalysis.monthOverMonthChange.revenue > 0;
+    const revenueChange = Math.abs(lastMonthAnalysis.monthOverMonthChange.revenue);
     
-    const revenueChange = ((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue * 100);
-    
-    if (Math.abs(revenueChange) > 5) {
-      const isPositive = revenueChange > 0;
-      recommendations.push({
-        type: isPositive ? 'opportunity' : 'warning',
-        priority: Math.abs(revenueChange) > 20 ? 'high' : 'medium',
-        title: `${isPositive ? 'Revenue Growth' : 'Revenue Decline'} Detected`,
-        description: `Revenue ${isPositive ? 'increased' : 'decreased'} by ${Math.abs(revenueChange).toFixed(1)}% from ${previousMonth.month} to ${lastMonth.month}.`,
-        dataInsight: `Revenue went from $${previousMonth.revenue.toLocaleString()} to $${lastMonth.revenue.toLocaleString()}`,
-        action: isPositive ? 'Capitalize on momentum by scaling successful strategies' : 'Investigate causes and implement corrective measures',
-        expectedImpact: isPositive ? 'Sustain growth trajectory' : 'Stabilize revenue performance',
-        timeframe: 'immediate',
-        icon: isPositive ? TrendingUp : AlertTriangle,
-        color: isPositive ? 'green' : 'orange'
-      });
-    }
+    recommendations.push({
+      type: isPositive ? 'opportunity' : 'warning',
+      priority: revenueChange > 20 ? 'high' : 'medium',
+      title: `${isPositive ? 'Revenue Growth' : 'Revenue Decline'} Last Month`,
+      description: `Revenue ${isPositive ? 'increased' : 'decreased'} ${revenueChange.toFixed(1)}% from ${lastMonthAnalysis.previousMonth.month} to ${lastMonthAnalysis.lastMonth.month}.`,
+      dataInsight: `Revenue: ${lastMonthAnalysis.previousMonth.month} $${lastMonthAnalysis.previousMonth.revenue.toLocaleString()} → ${lastMonthAnalysis.lastMonth.month} $${lastMonthAnalysis.lastMonth.revenue.toLocaleString()}`,
+      action: isPositive ? 'Double down on successful strategies from last month' : 'Identify and address factors that caused last month\'s decline',
+      expectedImpact: isPositive ? 'Maintain growth momentum' : 'Prevent further revenue decline',
+      timeframe: 'immediate',
+      icon: isPositive ? TrendingUp : AlertTriangle,
+      color: isPositive ? 'green' : 'orange'
+    });
   }
 
-  // Cost efficiency analysis
-  if (currentMetrics.avgCPA > 0 && currentMetrics.avgSale > 0) {
-    const cpaToSaleRatio = currentMetrics.avgCPA / currentMetrics.avgSale;
-    
-    if (cpaToSaleRatio < 0.4) {
+  // Cost efficiency analysis based on last month
+  const lastMonthCpaToSaleRatio = lastMonthAnalysis.lastMonthMetrics.avgSale > 0 ? 
+    lastMonthAnalysis.lastMonthMetrics.cpa / lastMonthAnalysis.lastMonthMetrics.avgSale : 0;
+  
+  if (lastMonthCpaToSaleRatio > 0) {
+    if (lastMonthCpaToSaleRatio < 0.4) {
       recommendations.push({
         type: 'opportunity',
         priority: 'high',
-        title: 'Strong Cost Efficiency - Scale Opportunity',
-        description: 'Your acquisition costs are very efficient relative to sale value.',
-        dataInsight: `CPA is ${(cpaToSaleRatio * 100).toFixed(1)}% of average sale value ($${currentMetrics.avgCPA.toFixed(2)} vs $${currentMetrics.avgSale.toFixed(2)})`,
-        action: 'Increase marketing budget by 30-50% while maintaining current targeting',
-        expectedImpact: 'Potentially increase revenue by 40-60% while maintaining profitability',
+        title: 'Excellent Cost Efficiency Last Month',
+        description: `${lastMonthAnalysis.lastMonth.month} showed very efficient acquisition costs relative to sale value.`,
+        dataInsight: `Last month CPA: $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}, Average sale: $${lastMonthAnalysis.lastMonthMetrics.avgSale.toFixed(2)} (${(lastMonthCpaToSaleRatio * 100).toFixed(1)}% ratio)`,
+        action: 'Scale marketing spend by 30-50% while maintaining current targeting and creative strategies',
+        expectedImpact: 'Increase revenue by 40-60% while maintaining profitability',
         timeframe: 'immediate',
         icon: Target,
         color: 'green'
       });
-    } else if (cpaToSaleRatio > 0.6) {
+    } else if (lastMonthCpaToSaleRatio > 0.6) {
       recommendations.push({
         type: 'warning',
-        priority: cpaToSaleRatio > 0.8 ? 'critical' : 'high',
-        title: 'Cost Efficiency Needs Attention',
-        description: 'Acquisition costs are high relative to sale value, impacting profitability.',
-        dataInsight: `CPA represents ${(cpaToSaleRatio * 100).toFixed(1)}% of average sale value`,
-        action: 'Optimize targeting, pause underperforming campaigns, or consider price adjustments',
-        expectedImpact: 'Improve profit margins by 20-30%',
+        priority: lastMonthCpaToSaleRatio > 0.8 ? 'critical' : 'high',
+        title: 'High Acquisition Costs Last Month',
+        description: `${lastMonthAnalysis.lastMonth.month} showed concerning cost efficiency with high CPA relative to sale value.`,
+        dataInsight: `Last month CPA: $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}, Average sale: $${lastMonthAnalysis.lastMonthMetrics.avgSale.toFixed(2)} (${(lastMonthCpaToSaleRatio * 100).toFixed(1)}% ratio)`,
+        action: 'Immediate optimization of ad targeting, pause underperforming campaigns, or review pricing strategy',
+        expectedImpact: 'Reduce costs and improve profit margins by 20-30%',
         timeframe: 'immediate',
         icon: AlertTriangle,
         color: 'red'
@@ -121,48 +235,28 @@ export const generateEnhancedRecommendations = (
     }
   }
 
-  // Profit margin analysis
-  if (currentMetrics.profitMargin < 20) {
-    const priority = currentMetrics.profitMargin < 10 ? 'critical' : currentMetrics.profitMargin < 15 ? 'high' : 'medium';
+  // CPA trend analysis (if previous month exists)
+  if (lastMonthAnalysis.previousMonth && Math.abs(lastMonthAnalysis.monthOverMonthChange.cpa) > 10) {
+    const cpaImproved = lastMonthAnalysis.monthOverMonthChange.cpa < 0;
+    const cpaChange = Math.abs(lastMonthAnalysis.monthOverMonthChange.cpa);
+    
     recommendations.push({
-      type: 'warning',
-      priority,
-      title: 'Profit Margin Below Target',
-      description: 'Your profit margins are below the recommended 20% threshold.',
-      dataInsight: `Current profit margin is ${currentMetrics.profitMargin.toFixed(1)}%, target is 20%+`,
-      action: 'Review cost structure, optimize spend allocation, or consider pricing strategy',
-      expectedImpact: 'Improve sustainability and growth capacity',
-      timeframe: 'next-month',
-      icon: DollarSign,
-      color: 'orange'
+      type: cpaImproved ? 'opportunity' : 'warning',
+      priority: cpaChange > 25 ? 'high' : 'medium',
+      title: `CPA ${cpaImproved ? 'Improved' : 'Worsened'} Last Month`,
+      description: `Cost per acquisition ${cpaImproved ? 'decreased' : 'increased'} ${cpaChange.toFixed(1)}% from previous month.`,
+      dataInsight: `CPA change: ${lastMonthAnalysis.previousMonth.month} $${((lastMonthAnalysis.previousMonth.adSpend + lastMonthAnalysis.previousMonth.nonAdCosts + lastMonthAnalysis.previousMonth.thirdPartyCosts) / Math.max(1, lastMonthAnalysis.previousMonth.orders)).toFixed(2)} → ${lastMonthAnalysis.lastMonth.month} $${lastMonthAnalysis.lastMonthMetrics.cpa.toFixed(2)}`,
+      action: cpaImproved ? 'Analyze what drove CPA improvement and replicate those tactics' : 'Investigate CPA increase and optimize underperforming channels',
+      expectedImpact: cpaImproved ? 'Maintain efficient acquisition costs' : 'Restore cost efficiency',
+      timeframe: 'immediate',
+      icon: cpaImproved ? Target : AlertTriangle,
+      color: cpaImproved ? 'green' : 'orange'
     });
   }
 
-  // Year-over-year insights (if available)
-  const yoyData = analysis.yearOverYear.filter(item => item.previousYear > 0);
-  if (yoyData.length > 0) {
-    const avgYoyGrowth = yoyData.reduce((sum, item) => sum + item.changePercent, 0) / yoyData.length;
-    
-    if (Math.abs(avgYoyGrowth) > 10) {
-      const isPositive = avgYoyGrowth > 0;
-      recommendations.push({
-        type: isPositive ? 'opportunity' : 'warning',
-        priority: Math.abs(avgYoyGrowth) > 25 ? 'high' : 'medium',
-        title: `${isPositive ? 'Outperforming' : 'Underperforming'} Previous Year`,
-        description: `${isPositive ? 'Strong' : 'Concerning'} year-over-year performance trend detected.`,
-        dataInsight: `Average ${Math.abs(avgYoyGrowth).toFixed(1)}% ${isPositive ? 'growth' : 'decline'} vs. same period last year`,
-        action: isPositive ? 'Document and replicate successful strategies' : 'Analyze last year\'s successful tactics and adapt them',
-        expectedImpact: isPositive ? 'Maintain competitive advantage' : 'Recover to previous performance levels',
-        timeframe: 'next-month',
-        icon: BarChart3,
-        color: isPositive ? 'purple' : 'orange'
-      });
-    }
-  }
-
-  // Seasonality recommendations
+  // Seasonality context (using historical data)
   if (analysis.seasonality.isSeasonalBusiness) {
-    const currentMonth = latestMonth.month.split('-')[1];
+    const currentMonth = lastMonthAnalysis.lastMonth.month.split('-')[1];
     const isBestSeason = analysis.seasonality.bestMonths.includes(currentMonth);
     const isWorstSeason = analysis.seasonality.worstMonths.includes(currentMonth);
     
@@ -170,12 +264,12 @@ export const generateEnhancedRecommendations = (
       recommendations.push({
         type: 'strategic',
         priority: 'high',
-        title: 'Peak Season Opportunity',
-        description: 'You\'re in one of your historically strongest performing months.',
-        dataInsight: `Month ${currentMonth} is typically a top performing month for your business`,
-        action: 'Maximize marketing spend and inventory to capture full seasonal potential',
+        title: 'Peak Season Performance Context',
+        description: `${lastMonthAnalysis.lastMonth.month} is historically a strong performing month for your business.`,
+        dataInsight: `Month ${currentMonth} typically ranks among your top performing months based on historical data`,
+        action: 'Prepare for continued strong performance and ensure adequate inventory/capacity',
         expectedImpact: 'Maximize seasonal revenue opportunity',
-        timeframe: 'immediate',
+        timeframe: 'next-month',
         icon: Calendar,
         color: 'purple'
       });
@@ -183,10 +277,10 @@ export const generateEnhancedRecommendations = (
       recommendations.push({
         type: 'tactical',
         priority: 'medium',
-        title: 'Off-Season Strategy',
-        description: 'Currently in a historically slower performing period.',
-        dataInsight: `Month ${currentMonth} is typically among your lower performing months`,
-        action: 'Focus on efficiency, customer retention, and preparation for next peak season',
+        title: 'Off-Season Performance Context',
+        description: `${lastMonthAnalysis.lastMonth.month} is historically a slower performing period.`,
+        dataInsight: `Month ${currentMonth} typically ranks among lower performing months based on historical patterns`,
+        action: 'Focus on efficiency optimization and prepare for next peak season',
         expectedImpact: 'Maintain profitability during slower period',
         timeframe: 'next-month',
         icon: Lightbulb,
@@ -195,16 +289,19 @@ export const generateEnhancedRecommendations = (
     }
   }
 
-  // Future predictions
+  // Future predictions based on last month trends
+  const predictions = generatePredictions(analysis);
   if (predictions.confidence === 'high' || predictions.confidence === 'medium') {
-    const isPositivePrediction = predictions.nextMonthRevenue > currentMetrics.avgRevenue;
+    const lastMonthRevenue = lastMonthAnalysis.lastMonthMetrics.revenue;
+    const isPositivePrediction = predictions.nextMonthRevenue > lastMonthRevenue;
+    
     recommendations.push({
       type: 'strategic',
       priority: predictions.confidence === 'high' ? 'medium' : 'low',
       title: `${predictions.confidence === 'high' ? 'High' : 'Medium'} Confidence Prediction`,
-      description: `Based on current trends, next month's performance is ${predictions.confidence === 'high' ? 'highly ' : ''}predictable.`,
-      dataInsight: `Predicted next month revenue: $${predictions.nextMonthRevenue.toLocaleString()} (${predictions.confidence} confidence)`,
-      action: isPositivePrediction ? 'Prepare for increased demand and scale operations' : 'Implement defensive strategies and cost controls',
+      description: `Based on last month's performance and trends, next month's revenue is predictable with ${predictions.confidence} confidence.`,
+      dataInsight: `Last month: $${lastMonthRevenue.toLocaleString()}, Predicted next month: $${predictions.nextMonthRevenue.toLocaleString()} (${predictions.confidence} confidence)`,
+      action: isPositivePrediction ? 'Prepare for growth - scale operations and marketing' : 'Implement cost controls and defensive strategies',
       expectedImpact: 'Proactively manage expected performance changes',
       timeframe: 'next-month',
       icon: Zap,
@@ -212,45 +309,14 @@ export const generateEnhancedRecommendations = (
     });
   }
 
-  // Always provide a strategic recommendation
-  if (recommendations.length < 3) {
-    recommendations.push({
-      type: 'strategic',
-      priority: 'medium',
-      title: 'Continue Performance Monitoring',
-      description: 'Maintain regular analysis of your key performance metrics.',
-      dataInsight: `Tracking ${filteredData.length} months of data with consistent monitoring`,
-      action: 'Set up monthly performance reviews and adjust strategies based on trends',
-      expectedImpact: 'Ensure sustained growth and early problem detection',
-      timeframe: 'next-quarter',
-      icon: Lightbulb,
-      color: 'blue'
-    });
-  }
-
-  // Sort by priority and return
+  // Sort by priority and return top recommendations
   const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
   return recommendations
     .sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])
     .slice(0, 6);
 };
 
-const calculateCurrentMetrics = (data: ProductData[]) => {
-  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
-  const totalCosts = data.reduce((sum, item) => sum + item.adSpend + item.nonAdCosts + item.thirdPartyCosts, 0);
-  const totalOrders = data.reduce((sum, item) => sum + item.orders, 0);
-  
-  return {
-    avgRevenue: totalRevenue / data.length,
-    totalRevenue,
-    totalCosts,
-    profitMargin: totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0,
-    avgCPA: totalOrders > 0 ? totalCosts / totalOrders : 0,
-    avgSale: totalOrders > 0 ? totalRevenue / totalOrders : 0
-  };
-};
-
-const getPerformanceGrade = (metrics: ReturnType<typeof calculateCurrentMetrics>) => {
+const getPerformanceGrade = (metrics: { profitMargin: number }) => {
   if (metrics.profitMargin >= 35) {
     return {
       grade: 'Excellent',

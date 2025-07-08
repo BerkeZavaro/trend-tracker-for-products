@@ -64,54 +64,47 @@ export const useRecommendationsData = (productId: string, timeFrame: { start: st
 
     const quickWins = [];
     
-    // Month-to-month improvements
-    if (filteredData.length >= 2) {
-      const sortedData = [...filteredData].sort((a, b) => a.month.localeCompare(b.month));
-      const lastMonth = sortedData[sortedData.length - 1];
-      const previousMonth = sortedData[sortedData.length - 2];
+    // Sort by date to get the actual last month
+    const sortedData = [...filteredData].sort((a, b) => a.month.localeCompare(b.month));
+    const lastMonth = sortedData[sortedData.length - 1];
+    const previousMonth = sortedData.length > 1 ? sortedData[sortedData.length - 2] : null;
+    
+    // Last month revenue performance
+    if (previousMonth && lastMonth.revenue > previousMonth.revenue) {
+      const improvement = ((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue * 100).toFixed(1);
+      quickWins.push(`Last month (${lastMonth.month}) revenue grew ${improvement}% to $${lastMonth.revenue.toLocaleString()}`);
+    }
+    
+    // Last month CPA efficiency
+    if (previousMonth && lastMonth.orders > 0 && previousMonth.orders > 0) {
+      const lastCPA = (lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts) / lastMonth.orders;
+      const prevCPA = (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders;
       
-      if (lastMonth.revenue > previousMonth.revenue) {
-        const improvement = ((lastMonth.revenue - previousMonth.revenue) / previousMonth.revenue * 100).toFixed(1);
-        quickWins.push(`Revenue grew ${improvement}% from ${previousMonth.month} to ${lastMonth.month} - momentum is building`);
-      }
-      
-      // CPA efficiency check
-      const lastCPA = lastMonth.orders > 0 ? (lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts) / lastMonth.orders : 0;
-      const prevCPA = previousMonth.orders > 0 ? (previousMonth.adSpend + previousMonth.nonAdCosts + previousMonth.thirdPartyCosts) / previousMonth.orders : 0;
-      
-      if (lastCPA < prevCPA && lastCPA > 0) {
+      if (lastCPA < prevCPA) {
         const improvement = ((prevCPA - lastCPA) / prevCPA * 100).toFixed(1);
-        quickWins.push(`Cost per acquisition improved ${improvement}% - efficiency is increasing`);
+        quickWins.push(`Last month CPA improved ${improvement}% to $${lastCPA.toFixed(2)} per order`);
       }
     }
 
-    // Year-over-year comparison
-    const currentYear = new Date().getFullYear();
-    const currentYearData = filteredData.filter(item => item.month.startsWith(currentYear.toString()));
-    const lastYearData = allProductData.filter(item => item.month.startsWith((currentYear - 1).toString()));
+    // Last month profit margin
+    const lastMonthCosts = lastMonth.adSpend + lastMonth.nonAdCosts + lastMonth.thirdPartyCosts;
+    const lastMonthProfit = lastMonth.revenue - lastMonthCosts;
+    const lastMonthProfitMargin = lastMonth.revenue > 0 ? (lastMonthProfit / lastMonth.revenue) * 100 : 0;
     
-    if (currentYearData.length > 0 && lastYearData.length > 0) {
-      const currentAvg = currentYearData.reduce((sum, item) => sum + item.revenue, 0) / currentYearData.length;
-      const lastYearAvg = lastYearData.reduce((sum, item) => sum + item.revenue, 0) / lastYearData.length;
-      
-      if (currentAvg > lastYearAvg) {
-        const improvement = ((currentAvg - lastYearAvg) / lastYearAvg * 100).toFixed(1);
-        quickWins.push(`Outperforming last year by ${improvement}% on average - strong year-over-year growth`);
-      }
+    if (lastMonthProfitMargin > 20) {
+      quickWins.push(`Last month achieved strong ${lastMonthProfitMargin.toFixed(1)}% profit margin ($${lastMonthProfit.toLocaleString()} profit)`);
     }
 
-    // Profit margin health check
-    const totalRevenue = filteredData.reduce((sum, item) => sum + item.revenue, 0);
-    const totalCosts = filteredData.reduce((sum, item) => sum + item.adSpend + item.nonAdCosts + item.thirdPartyCosts, 0);
-    const profitMargin = totalRevenue > 0 ? ((totalRevenue - totalCosts) / totalRevenue) * 100 : 0;
+    // Year-over-year comparison for last month
+    const [year, month] = lastMonth.month.split('-');
+    const lastYearSameMonth = allProductData.find(item => item.month === `${parseInt(year) - 1}-${month}`);
     
-    if (profitMargin > 25) {
-      quickWins.push(`Strong ${profitMargin.toFixed(1)}% profit margin provides room for strategic investments`);
-    } else if (profitMargin > 15) {
-      quickWins.push(`Healthy ${profitMargin.toFixed(1)}% profit margin - focus on maintaining efficiency`);
+    if (lastYearSameMonth && lastMonth.revenue > lastYearSameMonth.revenue) {
+      const yoyGrowth = ((lastMonth.revenue - lastYearSameMonth.revenue) / lastYearSameMonth.revenue * 100).toFixed(1);
+      quickWins.push(`Last month outperformed same month last year by ${yoyGrowth}% ($${lastMonth.revenue.toLocaleString()} vs $${lastYearSameMonth.revenue.toLocaleString()})`);
     }
 
-    return quickWins.length > 0 ? quickWins : ['Continue monitoring performance for optimization opportunities'];
+    return quickWins.length > 0 ? quickWins : ['Last month data available - focus on optimizing recent performance trends'];
   };
 
   return {
