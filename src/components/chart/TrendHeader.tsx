@@ -1,14 +1,24 @@
 
-import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target, Maximize2, Minimize2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface TrendHeaderProps {
   isRevenue: boolean;
   hasData: boolean;
   trend: 'up' | 'down';
   trendPercent: number;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
-const TrendHeader = ({ isRevenue, hasData, trend, trendPercent }: TrendHeaderProps) => {
+const TrendHeader = ({ 
+  isRevenue, 
+  hasData, 
+  trend, 
+  trendPercent, 
+  isExpanded = false,
+  onToggleExpand 
+}: TrendHeaderProps) => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
@@ -19,22 +29,38 @@ const TrendHeader = ({ isRevenue, hasData, trend, trendPercent }: TrendHeaderPro
         )}
         {isRevenue ? 'Revenue Trend' : 'CPA Trend'}
       </div>
-      {hasData && (
-        <div className="flex items-center gap-2">
-          {trend === 'up' ? (
-            <TrendingUp className={`w-4 h-4 ${isRevenue ? 'text-green-600' : 'text-red-600'}`} />
-          ) : (
-            <TrendingDown className={`w-4 h-4 ${isRevenue ? 'text-red-600' : 'text-green-600'}`} />
-          )}
-          <span className={`text-sm font-medium ${
-            (isRevenue && trend === 'up') || (!isRevenue && trend === 'down') 
-              ? 'text-green-600' 
-              : 'text-red-600'
-          }`}>
-            {trendPercent.toFixed(1)}%
-          </span>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        {hasData && (
+          <div className="flex items-center gap-2">
+            {trend === 'up' ? (
+              <TrendingUp className={`w-4 h-4 ${isRevenue ? 'text-green-600' : 'text-red-600'}`} />
+            ) : (
+              <TrendingDown className={`w-4 h-4 ${isRevenue ? 'text-red-600' : 'text-green-600'}`} />
+            )}
+            <span className={`text-sm font-medium ${
+              (isRevenue && trend === 'up') || (!isRevenue && trend === 'down') 
+                ? 'text-green-600' 
+                : 'text-red-600'
+            }`}>
+              {trendPercent.toFixed(1)}%
+            </span>
+          </div>
+        )}
+        {onToggleExpand && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleExpand}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+          >
+            {isExpanded ? (
+              <Minimize2 className="w-4 h-4" />
+            ) : (
+              <Maximize2 className="w-4 h-4" />
+            )}
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

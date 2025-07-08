@@ -36,7 +36,42 @@ export const formatValue = (value: number, isRevenue: boolean) => {
   return `$${value.toFixed(2)}`;
 };
 
-export const calculateTrend = (data: Array<{ value: number }>): { trend: 'up' | 'down'; trendPercent: number } => {
+export const calculateTrend = (
+  data: Array<{ value: number; previousYear?: number | null }>,
+  timeFrame?: { start: string; end: string }
+): { trend: 'up' | 'down'; trendPercent: number } => {
+  if (data.length === 0) return { trend: 'up', trendPercent: 0 };
+  
+  // If we have timeframe data, calculate period comparison
+  if (timeFrame && data.length > 1) {
+    // Calculate current period total/average
+    const currentPeriodTotal = data.reduce((sum, item) => sum + item.value, 0);
+    const currentPeriodAverage = currentPeriodTotal / data.length;
+    
+    // Calculate previous year period total/average (if available)
+    const previousYearData = data.filter(item => item.previousYear !== null && item.previousYear !== undefined);
+    if (previousYearData.length > 0) {
+      const previousPeriodTotal = previousYearData.reduce((sum, item) => sum + (item.previousYear || 0), 0);
+      const previousPeriodAverage = previousPeriodTotal / previousYearData.length;
+      
+      if (previousPeriodAverage > 0) {
+        const trend: 'up' | 'down' = currentPeriodAverage > previousPeriodAverage ? 'up' : 'down';
+        const trendPercent = Math.abs(((currentPeriodAverage - previousPeriodAverage) / previousPeriodAverage) * 100);
+        return { trend, trendPercent };
+      }
+    }
+    
+    // Fallback to first vs last comparison if no previous year data
+    const firstValue = data[0]?.value || 0;
+    const lastValue = data[data.length - 1]?.value || 0;
+    if (firstValue > 0) {
+      const trend: 'up' | 'down' = lastValue > firstValue ? 'up' : 'down';
+      const trendPercent = Math.abs(((lastValue - firstValue) / firstValue) * 100);
+      return { trend, trendPercent };
+    }
+  }
+  
+  // Original logic for backward compatibility
   if (data.length < 2) return { trend: 'up', trendPercent: 0 };
   
   const currentValue = data[data.length - 1]?.value || 0;

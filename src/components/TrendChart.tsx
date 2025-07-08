@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { useData } from '@/contexts/DataContext';
@@ -17,6 +18,7 @@ interface TrendChartProps {
 const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   const { getProductData, uploadedData } = useData();
   const productData = getProductData(productId);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Filter data for the selected time frame using enhanced date logic
   const filteredData = productData.filter(item => 
@@ -93,8 +95,12 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
   const data = generateChartData();
   const isRevenue = metric === 'revenue';
   
-  // Calculate trend
-  const { trend, trendPercent } = calculateTrend(data);
+  // Calculate trend using the improved timeframe-based calculation
+  const { trend, trendPercent } = calculateTrend(data, timeFrame);
+
+  const handleToggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
 
   // Don't render if no data
   if (data.length === 0) {
@@ -107,11 +113,13 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
               hasData={false}
               trend={trend}
               trendPercent={trendPercent}
+              isExpanded={isExpanded}
+              onToggleExpand={handleToggleExpand}
             />
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center text-gray-500">
+          <div className={`${isExpanded ? 'h-96' : 'h-64'} flex items-center justify-center text-gray-500 transition-all duration-300`}>
             No data available for the selected time frame
           </div>
         </CardContent>
@@ -125,14 +133,16 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
         <CardTitle className="text-lg text-gray-800">
           <TrendHeader 
             isRevenue={isRevenue}
-            hasData={data.length > 1}
+            hasData={data.length > 0}
             trend={trend}
             trendPercent={trendPercent}
+            isExpanded={isExpanded}
+            onToggleExpand={handleToggleExpand}
           />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
+        <div className={`${isExpanded ? 'h-96' : 'h-64'} transition-all duration-300`}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <defs>
