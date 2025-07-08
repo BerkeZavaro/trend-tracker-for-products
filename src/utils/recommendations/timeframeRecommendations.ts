@@ -86,16 +86,16 @@ export const generateTimeframeRecommendations = (
 
   // Adjusted CPA efficiency across timeframe
   if (timeframeMetrics.avgAdjustedCpa > 0) {
-    const avgSaleValue = timeframeMetrics.totalOrders > 0 ? timeframeMetrics.totalRevenue / timeframeMetrics.totalOrders : 0;
-    const cpaToSaleRatio = avgSaleValue > 0 ? timeframeMetrics.avgAdjustedCpa / avgSaleValue : 0;
+    const avgSale = timeframeMetrics.totalOrders > 0 ? timeframeMetrics.totalRevenue / timeframeMetrics.totalOrders : 0;
+    const cpaToSaleRatio = avgSale > 0 ? timeframeMetrics.avgAdjustedCpa / avgSale : 0;
     
     if (cpaToSaleRatio > 0) {
       recommendations.push({
         type: cpaToSaleRatio < 0.4 ? 'opportunity' : 'warning',
         priority: cpaToSaleRatio > 0.6 ? 'high' : 'medium',
         title: `${timeframeMetrics.monthCount}-Month Average Adjusted CPA Efficiency`,
-        description: `Your average Adjusted CPA of $${timeframeMetrics.avgAdjustedCpa.toFixed(2)} represents ${(cpaToSaleRatio * 100).toFixed(1)}% of your average sale value over this period.`,
-        dataInsight: `Period averages: Adjusted CPA $${timeframeMetrics.avgAdjustedCpa.toFixed(2)}, Sale value $${avgSaleValue.toFixed(2)}, Efficiency ratio ${(cpaToSaleRatio * 100).toFixed(1)}%`,
+        description: `Your average Adjusted CPA of $${timeframeMetrics.avgAdjustedCpa.toFixed(2)} represents ${(cpaToSaleRatio * 100).toFixed(1)}% of your average sale over this period.`,
+        dataInsight: `Period averages: Adjusted CPA $${timeframeMetrics.avgAdjustedCpa.toFixed(2)}, Average sale $${avgSale.toFixed(2)}, Efficiency ratio ${(cpaToSaleRatio * 100).toFixed(1)}%`,
         action: cpaToSaleRatio < 0.4 ? 'Scale marketing investment while maintaining current efficiency levels' : 'Optimize targeting and creative to improve cost efficiency',
         expectedImpact: cpaToSaleRatio < 0.4 ? 'Increased revenue with maintained profitability' : 'Improved profit margins',
         timeframe: 'next-month',
