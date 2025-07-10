@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 
-export type MetricType = 'revenue' | 'adSpend' | 'totalCost' | 'orders' | 'cpa' | 'avgOrderValue';
+export type MetricType = 'revenue' | 'adSpend' | 'totalCost' | 'orders' | 'adjustedCpa' | 'avgOrderValue' | 'profit';
 
 interface MetricSelectorProps {
   selectedMetrics: MetricType[];
@@ -21,8 +21,9 @@ const METRIC_LABELS: Record<MetricType, string> = {
   adSpend: 'Ad Spend',
   totalCost: 'Total Cost',
   orders: 'Orders',
-  cpa: 'CPA',
-  avgOrderValue: 'Avg Order Value'
+  adjustedCpa: 'Adjusted CPA',
+  avgOrderValue: 'Avg Order Value',
+  profit: 'Profit'
 };
 
 const MetricSelector = ({ selectedMetrics, onMetricsChange }: MetricSelectorProps) => {

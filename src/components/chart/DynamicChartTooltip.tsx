@@ -18,18 +18,19 @@ const METRIC_LABELS: Record<MetricType, string> = {
   adSpend: 'Ad Spend',
   totalCost: 'Total Cost',
   orders: 'Orders',
-  cpa: 'CPA',
-  avgOrderValue: 'Avg Order Value'
+  adjustedCpa: 'Adjusted CPA',
+  avgOrderValue: 'Avg Order Value',
+  profit: 'Profit'
 };
 
 const formatMetricValue = (value: number, metric: string): string => {
   if (metric === 'orders') {
     return value.toLocaleString();
   }
-  if (metric === 'revenue' || metric === 'adSpend' || metric === 'totalCost' || metric === 'avgOrderValue') {
+  if (metric === 'revenue' || metric === 'adSpend' || metric === 'totalCost' || metric === 'avgOrderValue' || metric === 'profit') {
     return formatValue(value, true);
   }
-  if (metric === 'cpa') {
+  if (metric === 'adjustedCpa') {
     return formatValue(value, false);
   }
   return value.toString();

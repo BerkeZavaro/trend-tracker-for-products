@@ -8,7 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { useDynamicChartData } from '@/hooks/useDynamicChartData';
 import MetricSelector, { MetricType } from '@/components/chart/MetricSelector';
 import DynamicChartTooltip from '@/components/chart/DynamicChartTooltip';
-import ChartModal from '@/components/chart/ChartModal';
+import DynamicChartModal from '@/components/chart/DynamicChartModal';
 
 interface DynamicLineChartProps {
   productId: string;
@@ -20,8 +20,9 @@ const METRIC_COLORS: Record<MetricType, string> = {
   adSpend: '#3b82f6',
   totalCost: '#f59e0b',
   orders: '#8b5cf6',
-  cpa: '#ef4444',
-  avgOrderValue: '#06b6d4'
+  adjustedCpa: '#ef4444',
+  avgOrderValue: '#06b6d4',
+  profit: '#10b981'
 };
 
 const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
@@ -37,17 +38,6 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-  };
-
-  // Transform data for ChartModal (using revenue as default for modal)
-  const transformDataForModal = () => {
-    return data.map(item => ({
-      month: item.month,
-      value: item.revenue,
-      previousYear: item.previousYear?.revenue || null,
-      averageSale: item.avgOrderValue,
-      previousYearAverageSale: item.previousYear?.avgOrderValue || null
-    }));
   };
 
   // Show empty state if no data or no metrics selected
@@ -187,14 +177,14 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
         </CardContent>
       </Card>
 
-      <ChartModal
+      <DynamicChartModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        data={transformDataForModal()}
-        metric="revenue"
+        data={data}
+        selectedMetrics={selectedMetrics}
+        showComparison={showComparison}
+        metricColors={METRIC_COLORS}
         title="Performance Metrics - Fullscreen View"
-        trend="up"
-        trendPercent={0}
       />
     </>
   );

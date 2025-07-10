@@ -9,15 +9,17 @@ export interface MetricDataPoint {
   adSpend: number;
   totalCost: number;
   orders: number;
-  cpa: number;
+  adjustedCpa: number;
   avgOrderValue: number;
+  profit: number;
   previousYear?: {
     revenue?: number;
     adSpend?: number;
     totalCost?: number;
     orders?: number;
-    cpa?: number;
+    adjustedCpa?: number;
     avgOrderValue?: number;
+    profit?: number;
   };
 }
 
@@ -66,8 +68,9 @@ export const useDynamicChartData = (
       const adSpend = item.adSpend || 0;
       const totalCost = (item.adSpend || 0) + (item.nonAdCosts || 0) + (item.thirdPartyCosts || 0);
       const orders = item.orders || 0;
-      const cpa = orders > 0 ? totalCost / orders : 0;
+      const adjustedCpa = item.adjustedCpa || 0;
       const avgOrderValue = orders > 0 ? revenue / orders : 0;
+      const profit = revenue - totalCost;
 
       // Find previous year data
       const previousYear = parseInt(year) - 1;
@@ -81,16 +84,18 @@ export const useDynamicChartData = (
         const prevAdSpend = previousYearItem.adSpend || 0;
         const prevTotalCost = (previousYearItem.adSpend || 0) + (previousYearItem.nonAdCosts || 0) + (previousYearItem.thirdPartyCosts || 0);
         const prevOrders = previousYearItem.orders || 0;
-        const prevCpa = prevOrders > 0 ? prevTotalCost / prevOrders : 0;
+        const prevAdjustedCpa = previousYearItem.adjustedCpa || 0;
         const prevAvgOrderValue = prevOrders > 0 ? prevRevenue / prevOrders : 0;
+        const prevProfit = prevRevenue - prevTotalCost;
 
         previousYearData = {
           revenue: prevRevenue,
           adSpend: prevAdSpend,
           totalCost: prevTotalCost,
           orders: prevOrders,
-          cpa: prevCpa,
-          avgOrderValue: prevAvgOrderValue
+          adjustedCpa: prevAdjustedCpa,
+          avgOrderValue: prevAvgOrderValue,
+          profit: prevProfit
         };
       }
 
@@ -100,8 +105,9 @@ export const useDynamicChartData = (
         adSpend,
         totalCost,
         orders,
-        cpa,
+        adjustedCpa,
         avgOrderValue,
+        profit,
         previousYear: previousYearData
       });
     });
