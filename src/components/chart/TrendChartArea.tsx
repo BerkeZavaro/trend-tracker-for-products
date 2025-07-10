@@ -46,22 +46,39 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
               tickFormatter={(value) => formatValue(value, isRevenue)}
             />
             <Tooltip content={<ChartTooltip isRevenue={isRevenue} />} />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke={isRevenue ? "#10b981" : "#3b82f6"}
-              strokeWidth={2}
-              fill={`url(#${metric}Gradient)`}
-            />
-            {!isRevenue && (
+            
+            {/* For Revenue charts: single area with gradient */}
+            {isRevenue && (
               <Area
                 type="monotone"
-                dataKey="saleCpaDifference"
-                stroke="transparent"
-                fill="url(#differenceGradient)"
-                stackId="1"
+                dataKey="value"
+                stroke="#10b981"
+                strokeWidth={2}
+                fill="url(#revenueGradient)"
               />
             )}
+            
+            {/* For CPA charts: transparent base area + orange difference area stacked */}
+            {!isRevenue && (
+              <>
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  fill="transparent"
+                  stackId="cpa"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="saleCpaDifference"
+                  stroke="transparent"
+                  fill="url(#differenceGradient)"
+                  stackId="cpa"
+                />
+              </>
+            )}
+            
             {!isRevenue && (
               <Line
                 type="monotone"
