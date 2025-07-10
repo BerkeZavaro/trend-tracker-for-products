@@ -52,15 +52,15 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
               stroke={isRevenue ? "#10b981" : "#3b82f6"}
               strokeWidth={2}
               fill={`url(#${metric}Gradient)`}
+              stackId="base"
             />
             {!isRevenue && (
               <Area
                 type="monotone"
                 dataKey="averageSale"
-                baseLine="dataMin"
                 stroke="transparent"
                 fill="url(#differenceGradient)"
-                stackId="difference"
+                stackId="base"
               />
             )}
             {!isRevenue && (

@@ -87,15 +87,15 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                   stroke={isRevenue ? "#10b981" : "#3b82f6"}
                   strokeWidth={3}
                   fill={`url(#${metric}GradientModal)`}
+                  stackId="base"
                 />
                 {!isRevenue && (
                   <Area
                     type="monotone"
                     dataKey="averageSale"
-                    baseLine="dataMin"
                     stroke="transparent"
                     fill="url(#differenceGradientModal)"
-                    stackId="difference"
+                    stackId="base"
                   />
                 )}
                 {!isRevenue && (
