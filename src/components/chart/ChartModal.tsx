@@ -95,11 +95,7 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                     dataKey="saleCpaDifference"
                     stroke="transparent"
                     fill="url(#differenceGradientModal)"
-                    baseLine={(props) => {
-                      // Base the area on the CPA value (the 'value' dataKey)
-                      const dataPoint = data.find(d => d.month === props.payload?.month);
-                      return dataPoint?.value || 0;
-                    }}
+                    stackId="1"
                   />
                 )}
                 {!isRevenue && (
