@@ -9,6 +9,7 @@ export interface ChartDataPoint {
   previousYear: number | null;
   averageSale?: number;
   previousYearAverageSale?: number | null;
+  saleCpaDifference?: number;
 }
 
 export const useTrendChartData = (
@@ -55,6 +56,7 @@ export const useTrendChartData = (
       // Calculate current value
       let value = 0;
       let averageSale: number | undefined;
+      let saleCpaDifference: number | undefined;
       
       if (metric === 'revenue') {
         value = item.revenue || 0;
@@ -65,6 +67,10 @@ export const useTrendChartData = (
         
         // Calculate average sale for CPA charts
         averageSale = item.orders > 0 ? (item.revenue || 0) / item.orders : 0;
+        
+        // Calculate the difference between average sale and CPA for area filling
+        // Only positive differences (when avg sale > CPA) should be filled
+        saleCpaDifference = averageSale > value ? averageSale - value : 0;
       }
 
       // Find previous year data
@@ -92,7 +98,8 @@ export const useTrendChartData = (
         value,
         previousYear: previousYearValue,
         averageSale,
-        previousYearAverageSale
+        previousYearAverageSale,
+        saleCpaDifference
       });
     });
 

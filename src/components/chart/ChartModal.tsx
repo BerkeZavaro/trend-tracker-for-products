@@ -15,6 +15,7 @@ interface ChartModalProps {
     previousYear: number | null;
     averageSale?: number;
     previousYearAverageSale?: number | null;
+    saleCpaDifference?: number;
   }>;
   metric: 'revenue' | 'cpa';
   title: string;
@@ -87,15 +88,18 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                   stroke={isRevenue ? "#10b981" : "#3b82f6"}
                   strokeWidth={3}
                   fill={`url(#${metric}GradientModal)`}
-                  stackId="base"
                 />
                 {!isRevenue && (
                   <Area
                     type="monotone"
-                    dataKey="averageSale"
+                    dataKey="saleCpaDifference"
                     stroke="transparent"
                     fill="url(#differenceGradientModal)"
-                    stackId="base"
+                    baseLine={(props) => {
+                      // Base the area on the CPA value (the 'value' dataKey)
+                      const dataPoint = data.find(d => d.month === props.payload?.month);
+                      return dataPoint?.value || 0;
+                    }}
                   />
                 )}
                 {!isRevenue && (

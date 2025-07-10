@@ -31,7 +31,7 @@ const ChartTooltip = ({ active, payload, label, isRevenue }: ChartTooltipProps) 
             </p>
             {averageSale > 0 && currentValue > 0 && (
               <p className="text-sm text-gray-700 font-medium">
-                Difference: {formatValue(averageSale - currentValue, true)}
+                Difference: ${(averageSale - currentValue).toFixed(2)}
               </p>
             )}
           </>
@@ -48,7 +48,7 @@ const ChartTooltip = ({ active, payload, label, isRevenue }: ChartTooltipProps) 
             </p>
             {previousYearAverageSale > 0 && previousYear !== null && previousYear !== undefined && previousYear > 0 && (
               <p className="text-sm text-gray-500">
-                Previous Year Difference: {formatValue(previousYearAverageSale - previousYear, true)}
+                Previous Year Difference: ${(previousYearAverageSale - previousYear).toFixed(2)}
               </p>
             )}
           </>

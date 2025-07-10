@@ -52,15 +52,18 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
               stroke={isRevenue ? "#10b981" : "#3b82f6"}
               strokeWidth={2}
               fill={`url(#${metric}Gradient)`}
-              stackId="base"
             />
             {!isRevenue && (
               <Area
                 type="monotone"
-                dataKey="averageSale"
+                dataKey="saleCpaDifference"
                 stroke="transparent"
                 fill="url(#differenceGradient)"
-                stackId="base"
+                baseLine={(props) => {
+                  // Base the area on the CPA value (the 'value' dataKey)
+                  const dataPoint = data.find(d => d.month === props.payload?.month);
+                  return dataPoint?.value || 0;
+                }}
               />
             )}
             {!isRevenue && (
