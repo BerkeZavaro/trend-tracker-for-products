@@ -47,6 +47,16 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
               strokeWidth={2}
               fill={`url(#${metric}Gradient)`}
             />
+            {!isRevenue && (
+              <Line
+                type="monotone"
+                dataKey="averageSale"
+                stroke="#f97316"
+                strokeWidth={3}
+                dot={{ fill: "#f97316", r: 4 }}
+                connectNulls={false}
+              />
+            )}
             <Line
               type="monotone"
               dataKey="previousYear"
@@ -55,6 +65,16 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
               strokeDasharray="5 5"
               dot={false}
             />
+            {!isRevenue && (
+              <Line
+                type="monotone"
+                dataKey="previousYearAverageSale"
+                stroke="#fb923c"
+                strokeWidth={1}
+                strokeDasharray="5 5"
+                dot={false}
+              />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>

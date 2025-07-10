@@ -7,6 +7,8 @@ export interface ChartDataPoint {
   month: string;
   value: number;
   previousYear: number | null;
+  averageSale?: number;
+  previousYearAverageSale?: number | null;
 }
 
 export const useTrendChartData = (
@@ -52,12 +54,17 @@ export const useTrendChartData = (
 
       // Calculate current value
       let value = 0;
+      let averageSale: number | undefined;
+      
       if (metric === 'revenue') {
         value = item.revenue || 0;
       } else {
         // Calculate CPA: total costs / orders
         const totalCosts = (item.adSpend || 0) + (item.nonAdCosts || 0) + (item.thirdPartyCosts || 0);
         value = item.orders > 0 ? totalCosts / item.orders : 0;
+        
+        // Calculate average sale for CPA charts
+        averageSale = item.orders > 0 ? (item.revenue || 0) / item.orders : 0;
       }
 
       // Find previous year data
@@ -66,19 +73,26 @@ export const useTrendChartData = (
       const previousYearItem = dataByDate.get(previousYearDate);
       
       let previousYearValue: number | null = null;
+      let previousYearAverageSale: number | null = null;
+      
       if (previousYearItem) {
         if (metric === 'revenue') {
           previousYearValue = previousYearItem.revenue || 0;
         } else {
           const prevTotalCosts = (previousYearItem.adSpend || 0) + (previousYearItem.nonAdCosts || 0) + (previousYearItem.thirdPartyCosts || 0);
           previousYearValue = previousYearItem.orders > 0 ? prevTotalCosts / previousYearItem.orders : 0;
+          
+          // Calculate previous year average sale
+          previousYearAverageSale = previousYearItem.orders > 0 ? (previousYearItem.revenue || 0) / previousYearItem.orders : 0;
         }
       }
 
       chartData.push({
         month: monthLabel,
         value,
-        previousYear: previousYearValue
+        previousYear: previousYearValue,
+        averageSale,
+        previousYearAverageSale
       });
     });
 

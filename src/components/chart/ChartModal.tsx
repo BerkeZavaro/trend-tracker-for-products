@@ -13,6 +13,8 @@ interface ChartModalProps {
     month: string;
     value: number;
     previousYear: number | null;
+    averageSale?: number;
+    previousYearAverageSale?: number | null;
   }>;
   metric: 'revenue' | 'cpa';
   title: string;
@@ -80,6 +82,16 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                   strokeWidth={3}
                   fill={`url(#${metric}GradientModal)`}
                 />
+                {!isRevenue && (
+                  <Line
+                    type="monotone"
+                    dataKey="averageSale"
+                    stroke="#f97316"
+                    strokeWidth={4}
+                    dot={{ fill: "#f97316", r: 5 }}
+                    connectNulls={false}
+                  />
+                )}
                 <Line
                   type="monotone"
                   dataKey="previousYear"
@@ -88,6 +100,16 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                   strokeDasharray="5 5"
                   dot={false}
                 />
+                {!isRevenue && (
+                  <Line
+                    type="monotone"
+                    dataKey="previousYearAverageSale"
+                    stroke="#fb923c"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
