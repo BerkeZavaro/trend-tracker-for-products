@@ -59,6 +59,12 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                     <stop offset="5%" stopColor={isRevenue ? "#10b981" : "#3b82f6"} stopOpacity={0.3}/>
                     <stop offset="95%" stopColor={isRevenue ? "#10b981" : "#3b82f6"} stopOpacity={0}/>
                   </linearGradient>
+                  {!isRevenue && (
+                    <linearGradient id="differenceGradientModal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0.1}/>
+                    </linearGradient>
+                  )}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
@@ -83,12 +89,22 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                   fill={`url(#${metric}GradientModal)`}
                 />
                 {!isRevenue && (
+                  <Area
+                    type="monotone"
+                    dataKey="averageSale"
+                    baseLine="dataMin"
+                    stroke="transparent"
+                    fill="url(#differenceGradientModal)"
+                    stackId="difference"
+                  />
+                )}
+                {!isRevenue && (
                   <Line
                     type="monotone"
                     dataKey="averageSale"
                     stroke="#f97316"
                     strokeWidth={4}
-                    dot={{ fill: "#f97316", r: 5 }}
+                    dot={false}
                     connectNulls={false}
                   />
                 )}
