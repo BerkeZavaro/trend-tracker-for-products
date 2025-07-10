@@ -6,8 +6,6 @@ interface TrendChartEmptyProps {
   metric: 'revenue' | 'cpa';
   trend: 'up' | 'down';
   trendPercent: number;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
   onOpenFullscreen: () => void;
 }
 
@@ -15,8 +13,6 @@ const TrendChartEmpty = ({
   metric, 
   trend, 
   trendPercent, 
-  isExpanded, 
-  onToggleExpand, 
   onOpenFullscreen 
 }: TrendChartEmptyProps) => {
   const isRevenue = metric === 'revenue';
@@ -30,14 +26,12 @@ const TrendChartEmpty = ({
             hasData={false}
             trend={trend}
             trendPercent={trendPercent}
-            isExpanded={isExpanded}
-            onToggleExpand={onToggleExpand}
             onOpenFullscreen={onOpenFullscreen}
           />
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`${isExpanded ? 'h-[500px]' : 'h-64'} flex items-center justify-center text-gray-500 transition-all duration-300`}>
+        <div className="h-64 flex items-center justify-center text-gray-500 transition-all duration-300">
           No data available for the selected time frame
         </div>
       </CardContent>

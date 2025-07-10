@@ -14,15 +14,10 @@ interface TrendChartProps {
 }
 
 const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, trend, trendPercent, hasData } = useTrendChartData(productId, timeFrame, metric);
   const isRevenue = metric === 'revenue';
-
-  const handleToggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
 
   const handleOpenFullscreen = () => {
     setIsModalOpen(true);
@@ -39,8 +34,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
         metric={metric}
         trend={trend}
         trendPercent={trendPercent}
-        isExpanded={isExpanded}
-        onToggleExpand={handleToggleExpand}
         onOpenFullscreen={handleOpenFullscreen}
       />
     );
@@ -56,8 +49,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
               hasData={hasData}
               trend={trend}
               trendPercent={trendPercent}
-              isExpanded={isExpanded}
-              onToggleExpand={handleToggleExpand}
               onOpenFullscreen={handleOpenFullscreen}
             />
           </CardTitle>
@@ -66,7 +57,6 @@ const TrendChart = ({ productId, timeFrame, metric }: TrendChartProps) => {
           <TrendChartArea
             data={data}
             metric={metric}
-            isExpanded={isExpanded}
           />
         </CardContent>
       </Card>

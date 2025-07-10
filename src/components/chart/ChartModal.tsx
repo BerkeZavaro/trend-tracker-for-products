@@ -94,7 +94,7 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                   />
                 )}
                 
-                {/* For CPA charts: transparent base area + orange difference area stacked */}
+                {/* For CPA charts: blue base area + orange difference area stacked */}
                 {!isRevenue && (
                   <>
                     <Area
@@ -102,7 +102,7 @@ const ChartModal = ({ isOpen, onClose, data, metric, title, trend, trendPercent 
                       dataKey="value"
                       stroke="#3b82f6"
                       strokeWidth={3}
-                      fill="transparent"
+                      fill="url(#cpaGradientModal)"
                       stackId="cpa"
                     />
                     <Area

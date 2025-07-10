@@ -8,15 +8,14 @@ import { ChartDataPoint } from '@/hooks/useTrendChartData';
 interface TrendChartAreaProps {
   data: ChartDataPoint[];
   metric: 'revenue' | 'cpa';
-  isExpanded: boolean;
 }
 
-const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
+const TrendChartArea = ({ data, metric }: TrendChartAreaProps) => {
   const isRevenue = metric === 'revenue';
 
   return (
     <>
-      <div className={`${isExpanded ? 'h-[500px]' : 'h-64'} transition-all duration-300`}>
+      <div className="h-64 transition-all duration-300">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <defs>
@@ -58,7 +57,7 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
               />
             )}
             
-            {/* For CPA charts: transparent base area + orange difference area stacked */}
+            {/* For CPA charts: blue base area + orange difference area stacked */}
             {!isRevenue && (
               <>
                 <Area
@@ -66,7 +65,7 @@ const TrendChartArea = ({ data, metric, isExpanded }: TrendChartAreaProps) => {
                   dataKey="value"
                   stroke="#3b82f6"
                   strokeWidth={2}
-                  fill="transparent"
+                  fill="url(#cpaGradient)"
                   stackId="cpa"
                 />
                 <Area

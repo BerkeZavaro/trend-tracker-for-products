@@ -1,5 +1,5 @@
 
-import { TrendingUp, TrendingDown, DollarSign, Target, Maximize2, Minimize2, Maximize } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface TrendHeaderProps {
@@ -7,8 +7,6 @@ interface TrendHeaderProps {
   hasData: boolean;
   trend: 'up' | 'down';
   trendPercent: number;
-  isExpanded?: boolean;
-  onToggleExpand?: () => void;
   onOpenFullscreen?: () => void;
 }
 
@@ -17,8 +15,6 @@ const TrendHeader = ({
   hasData, 
   trend, 
   trendPercent, 
-  isExpanded = false,
-  onToggleExpand,
   onOpenFullscreen
 }: TrendHeaderProps) => {
   return (
@@ -48,34 +44,17 @@ const TrendHeader = ({
             </span>
           </div>
         )}
-        <div className="flex items-center gap-1">
-          {onOpenFullscreen && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onOpenFullscreen}
-              className="h-8 w-8 p-0 hover:bg-gray-100"
-              title="Fullscreen view"
-            >
-              <Maximize className="w-4 h-4" />
-            </Button>
-          )}
-          {onToggleExpand && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleExpand}
-              className="h-8 w-8 p-0 hover:bg-gray-100"
-              title={isExpanded ? "Collapse" : "Expand"}
-            >
-              {isExpanded ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </Button>
-          )}
-        </div>
+        {onOpenFullscreen && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenFullscreen}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+            title="Fullscreen view"
+          >
+            <Maximize className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
