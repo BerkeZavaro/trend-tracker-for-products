@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import PerformanceTable from '@/components/PerformanceTable';
 import RecommendationsPanel from '@/components/RecommendationsPanel';
 import ExcelUpload from '@/components/ExcelUpload';
 import { useData } from '@/contexts/DataContext';
+import DynamicLineChart from '@/components/DynamicLineChart';
 
 const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -161,17 +161,11 @@ const Index = () => {
               timeFrame={appliedTimeFrame}
             />
 
-            {/* Charts and Analysis */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <TrendChart 
+            {/* Dynamic Line Chart - Replaces the two static charts */}
+            <div className="mb-8">
+              <DynamicLineChart 
                 productId={selectedProduct} 
                 timeFrame={appliedTimeFrame}
-                metric="revenue"
-              />
-              <TrendChart 
-                productId={selectedProduct} 
-                timeFrame={appliedTimeFrame}
-                metric="cpa"
               />
             </div>
 
