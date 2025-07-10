@@ -39,6 +39,17 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
     setIsModalOpen(false);
   };
 
+  // Transform data for ChartModal (using revenue as default for modal)
+  const transformDataForModal = () => {
+    return data.map(item => ({
+      month: item.month,
+      value: item.revenue,
+      previousYear: item.previousYear?.revenue || null,
+      averageSale: item.avgOrderValue,
+      previousYearAverageSale: item.previousYear?.avgOrderValue || null
+    }));
+  };
+
   // Show empty state if no data or no metrics selected
   if (!hasData || selectedMetrics.length === 0) {
     return (
@@ -179,7 +190,7 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
       <ChartModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        data={data}
+        data={transformDataForModal()}
         metric="revenue"
         title="Performance Metrics - Fullscreen View"
         trend="up"
