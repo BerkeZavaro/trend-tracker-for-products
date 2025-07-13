@@ -247,7 +247,7 @@ const Index = () => {
               timeFrame={appliedTimeFrame}
             />
 
-            {/* Dynamic Line Chart - Replaces the two static charts */}
+            {/* Dynamic Line Chart - Now using refactored components */}
             <div className="mb-8">
               <DynamicLineChart 
                 productId={selectedProduct} 
