@@ -16,12 +16,12 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
   const { 
     getTopProducts, 
     getTopProductsByProfit, 
-    getBottomPerformers 
+    getDeclinedProducts 
   } = usePortfolioMetrics(timeFrame);
 
   const topRevenue = getTopProducts(5);
   const topProfit = getTopProductsByProfit(5);
-  const bottomPerformers = getBottomPerformers(5);
+  const declinedProducts = getDeclinedProducts(5);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -36,13 +36,23 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
     return new Intl.NumberFormat('en-US').format(value);
   };
 
-  const ProductList = ({ products, showMetric, metricLabel, icon }: {
+  const ProductList = ({ products, showMetric, metricLabel, icon, showDecline = false }: {
     products: any[];
     showMetric: 'revenue' | 'profitMargin' | 'profit';
     metricLabel: string;
     icon: React.ReactNode;
+    showDecline?: boolean;
   }) => {
-    if (products.length === 0) return null;
+    if (products.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          <p>No products found matching the criteria</p>
+          {showDecline && (
+            <p className="text-sm mt-2">This shows products that had significant profit decline compared to the previous period</p>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-4">
@@ -70,6 +80,13 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
                 <p className="text-sm text-gray-500">
                   {product.brand} • {formatNumber(product.orders)} orders
                 </p>
+                {showDecline && product.previousPeriodProfit && (
+                  <p className="text-xs text-red-600 mt-1">
+                    Previous: {formatCurrency(product.previousPeriodProfit)} → 
+                    Declined by {formatCurrency(product.profitDecline || 0)} 
+                    ({(product.profitDeclinePercentage || 0).toFixed(1)}%)
+                  </p>
+                )}
               </div>
             </div>
 
@@ -158,16 +175,20 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
           <TabsContent value="attention" className="mt-6">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <TrendingDown className="w-5 h-5 text-red-600" />
                 Products Needing Attention
               </h3>
-              <p className="text-sm text-gray-600">Products with the lowest profit margins - may need optimization or review</p>
+              <p className="text-sm text-gray-600">
+                Products that had strong profits before but declined significantly compared to the previous period. 
+                Package deals are excluded to focus on individual product performance.
+              </p>
             </div>
             <ProductList 
-              products={bottomPerformers}
-              showMetric="profitMargin"
-              metricLabel="Profit Margin"
+              products={declinedProducts}
+              showMetric="profit"
+              metricLabel="Current Profit"
               icon={<AlertTriangle className="w-4 h-4" />}
+              showDecline={true}
             />
           </TabsContent>
         </Tabs>
