@@ -4,6 +4,7 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { MetricDataPoint } from '@/hooks/useDynamicChartData';
 import { MetricType } from './MetricSelector';
 import DynamicChartTooltip from './DynamicChartTooltip';
+import { getAxisId, formatDollarAxis, formatNumberAxis, COUNT_METRICS } from '@/utils/chartAxisUtils';
 
 interface DynamicChartModalProps {
   isOpen: boolean;
@@ -24,6 +25,10 @@ const DynamicChartModal = ({
   metricColors, 
   title 
 }: DynamicChartModalProps) => {
+  // Check if we need both axes
+  const hasCountMetrics = selectedMetrics.some(metric => COUNT_METRICS.includes(metric));
+  const hasMoneyMetrics = selectedMetrics.some(metric => !COUNT_METRICS.includes(metric));
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-6">
@@ -38,7 +43,7 @@ const DynamicChartModal = ({
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}
-                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                margin={{ top: 20, right: hasCountMetrics ? 70 : 30, left: 20, bottom: 60 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis 
@@ -49,10 +54,28 @@ const DynamicChartModal = ({
                   textAnchor="end"
                   height={80}
                 />
-                <YAxis 
-                  tick={{ fontSize: 14 }}
-                  stroke="#6b7280"
-                />
+                
+                {/* Left Y-axis for money metrics */}
+                {hasMoneyMetrics && (
+                  <YAxis 
+                    yAxisId="left"
+                    tick={{ fontSize: 14 }}
+                    stroke="#6b7280"
+                    tickFormatter={formatDollarAxis}
+                  />
+                )}
+                
+                {/* Right Y-axis for count metrics */}
+                {hasCountMetrics && (
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 14 }}
+                    stroke="#6b7280"
+                    tickFormatter={formatNumberAxis}
+                  />
+                )}
+                
                 <Tooltip content={<DynamicChartTooltip />} />
                 <Legend />
 
@@ -66,6 +89,7 @@ const DynamicChartModal = ({
                     strokeWidth={3}
                     dot={{ r: 5 }}
                     activeDot={{ r: 7 }}
+                    yAxisId={getAxisId(metric)}
                   />
                 ))}
 
@@ -81,6 +105,7 @@ const DynamicChartModal = ({
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                     opacity={0.7}
+                    yAxisId={getAxisId(metric)}
                   />
                 ))}
               </LineChart>

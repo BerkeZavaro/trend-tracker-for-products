@@ -9,6 +9,7 @@ import { useDynamicChartData } from '@/hooks/useDynamicChartData';
 import MetricSelector, { MetricType } from '@/components/chart/MetricSelector';
 import DynamicChartTooltip from '@/components/chart/DynamicChartTooltip';
 import DynamicChartModal from '@/components/chart/DynamicChartModal';
+import { getAxisId, formatDollarAxis, formatNumberAxis, COUNT_METRICS } from '@/utils/chartAxisUtils';
 
 interface DynamicLineChartProps {
   productId: string;
@@ -39,6 +40,10 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
+
+  // Check if we need both axes
+  const hasCountMetrics = selectedMetrics.some(metric => COUNT_METRICS.includes(metric));
+  const hasMoneyMetrics = selectedMetrics.some(metric => !COUNT_METRICS.includes(metric));
 
   // Show empty state if no data or no metrics selected
   if (!hasData || selectedMetrics.length === 0) {
@@ -129,7 +134,7 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={data}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 5, right: hasCountMetrics ? 50 : 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis 
@@ -137,10 +142,28 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
                   tick={{ fontSize: 12 }}
                   stroke="#6b7280"
                 />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                  stroke="#6b7280"
-                />
+                
+                {/* Left Y-axis for money metrics */}
+                {hasMoneyMetrics && (
+                  <YAxis 
+                    yAxisId="left"
+                    tick={{ fontSize: 12 }}
+                    stroke="#6b7280"
+                    tickFormatter={formatDollarAxis}
+                  />
+                )}
+                
+                {/* Right Y-axis for count metrics */}
+                {hasCountMetrics && (
+                  <YAxis 
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 12 }}
+                    stroke="#6b7280"
+                    tickFormatter={formatNumberAxis}
+                  />
+                )}
+                
                 <Tooltip content={<DynamicChartTooltip />} />
                 <Legend />
 
@@ -154,6 +177,7 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
+                    yAxisId={getAxisId(metric)}
                   />
                 ))}
 
@@ -169,6 +193,7 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
                     dot={{ r: 3 }}
                     activeDot={{ r: 5 }}
                     opacity={0.7}
+                    yAxisId={getAxisId(metric)}
                   />
                 ))}
               </LineChart>
