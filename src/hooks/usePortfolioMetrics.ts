@@ -143,10 +143,10 @@ export const usePortfolioMetrics = (timeFrame: { start: string; end: string }) =
       .slice(0, limit);
   };
 
-  const getTopProductsByProfitMargin = (limit: number = 5): TopProduct[] => {
+  const getTopProductsByProfit = (limit: number = 5): TopProduct[] => {
     return getProductMetrics()
       .filter(product => product.revenue > 0) // Only include products with revenue
-      .sort((a, b) => b.profitMargin - a.profitMargin)
+      .sort((a, b) => b.profit - a.profit) // Sort by absolute profit amount
       .slice(0, limit);
   };
 
@@ -182,7 +182,7 @@ export const usePortfolioMetrics = (timeFrame: { start: string; end: string }) =
   return {
     calculatePortfolioMetrics,
     getTopProducts,
-    getTopProductsByProfitMargin,
+    getTopProductsByProfit,
     getTopProductsByGrowthRate,
     getBottomPerformers,
     getPerformanceDistribution

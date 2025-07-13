@@ -15,12 +15,12 @@ interface PortfolioRankingsProps {
 const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProps) => {
   const { 
     getTopProducts, 
-    getTopProductsByProfitMargin, 
+    getTopProductsByProfit, 
     getBottomPerformers 
   } = usePortfolioMetrics(timeFrame);
 
   const topRevenue = getTopProducts(5);
-  const topProfitMargin = getTopProductsByProfitMargin(5);
+  const topProfit = getTopProductsByProfit(5);
   const bottomPerformers = getBottomPerformers(5);
 
   const formatCurrency = (value: number) => {
@@ -113,9 +113,9 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
               <DollarSign className="w-4 h-4" />
               Top Revenue
             </TabsTrigger>
-            <TabsTrigger value="margin" className="flex items-center gap-2">
-              <Percent className="w-4 h-4" />
-              Best Margins
+            <TabsTrigger value="profit" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Top Profits
             </TabsTrigger>
             <TabsTrigger value="attention" className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
@@ -139,19 +139,19 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
             />
           </TabsContent>
 
-          <TabsContent value="margin" className="mt-6">
+          <TabsContent value="profit" className="mt-6">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <Percent className="w-5 h-5 text-blue-600" />
-                Top 5 Products by Profit Margin
+                <DollarSign className="w-5 h-5 text-blue-600" />
+                Top 5 Products by Total Profit
               </h3>
-              <p className="text-sm text-gray-600">Most efficient products with highest margins</p>
+              <p className="text-sm text-gray-600">Products contributing the most absolute profit to your business</p>
             </div>
             <ProductList 
-              products={topProfitMargin}
-              showMetric="profitMargin"
-              metricLabel="Profit Margin"
-              icon={<Percent className="w-4 h-4" />}
+              products={topProfit}
+              showMetric="profit"
+              metricLabel="Total Profit"
+              icon={<DollarSign className="w-4 h-4" />}
             />
           </TabsContent>
 
@@ -159,14 +159,14 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
-                Bottom 5 Performers
+                Products Needing Attention
               </h3>
-              <p className="text-sm text-gray-600">Products requiring immediate attention</p>
+              <p className="text-sm text-gray-600">Products with the lowest profit margins - may need optimization or review</p>
             </div>
             <ProductList 
               products={bottomPerformers}
-              showMetric="profit"
-              metricLabel="Total Profit"
+              showMetric="profitMargin"
+              metricLabel="Profit Margin"
               icon={<AlertTriangle className="w-4 h-4" />}
             />
           </TabsContent>
