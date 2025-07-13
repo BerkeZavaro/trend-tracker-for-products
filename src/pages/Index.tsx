@@ -14,7 +14,9 @@ import ExcelUpload from '@/components/ExcelUpload';
 import { useData } from '@/contexts/DataContext';
 import DynamicLineChart from '@/components/DynamicLineChart';
 import PortfolioMetricsCards from '@/components/PortfolioMetricsCards';
-import TopProductsList from '@/components/TopProductsList';
+import PerformanceDistributionCard from '@/components/PerformanceDistributionCard';
+import PortfolioRankings from '@/components/PortfolioRankings';
+import PortfolioInsights from '@/components/PortfolioInsights';
 
 const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -123,8 +125,14 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Portfolio Metrics Cards */}
+            {/* Enhanced Portfolio Metrics Cards */}
             <PortfolioMetricsCards timeFrame={appliedTimeFrame} />
+
+            {/* Performance Distribution and Insights Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <PerformanceDistributionCard timeFrame={appliedTimeFrame} />
+              <PortfolioInsights timeFrame={appliedTimeFrame} />
+            </div>
 
             {/* Portfolio Performance Chart */}
             <div className="mb-8">
@@ -135,8 +143,8 @@ const Index = () => {
               />
             </div>
 
-            {/* Top Products List */}
-            <TopProductsList 
+            {/* Enhanced Rankings Section */}
+            <PortfolioRankings 
               timeFrame={appliedTimeFrame}
               onProductSelect={setSelectedProduct}
             />
