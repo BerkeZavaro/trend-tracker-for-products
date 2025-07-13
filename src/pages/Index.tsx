@@ -13,6 +13,8 @@ import RecommendationsPanel from '@/components/RecommendationsPanel';
 import ExcelUpload from '@/components/ExcelUpload';
 import { useData } from '@/contexts/DataContext';
 import DynamicLineChart from '@/components/DynamicLineChart';
+import PortfolioMetricsCards from '@/components/PortfolioMetricsCards';
+import TopProductsList from '@/components/TopProductsList';
 
 const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -67,13 +69,97 @@ const Index = () => {
         {/* Excel Upload Section */}
         <ExcelUpload />
 
+        {/* Portfolio Overview Section - Show when data is loaded but no product selected */}
+        {isDataLoaded && !selectedProduct && (
+          <>
+            {/* Time Frame Section for Portfolio */}
+            <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Portfolio Analysis Time Frame
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Start Date</label>
+                    <Input
+                      type="month"
+                      value={pendingTimeFrame.start}
+                      onChange={(e) => setPendingTimeFrame(prev => ({ ...prev, start: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">End Date</label>
+                    <Input
+                      type="month"
+                      value={pendingTimeFrame.end}
+                      onChange={(e) => setPendingTimeFrame(prev => ({ ...prev, end: e.target.value }))}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {hasUnappliedChanges && (
+                      <Badge variant="secondary" className="text-xs">
+                        Changes pending
+                      </Badge>
+                    )}
+                  </div>
+                  <Button 
+                    onClick={handleApplyAnalysis}
+                    disabled={!hasUnappliedChanges}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Apply Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Portfolio Metrics Cards */}
+            <PortfolioMetricsCards timeFrame={appliedTimeFrame} />
+
+            {/* Portfolio Performance Chart */}
+            <div className="mb-8">
+              <DynamicLineChart 
+                timeFrame={appliedTimeFrame}
+                isPortfolio={true}
+                title="Portfolio Performance Overview"
+              />
+            </div>
+
+            {/* Top Products List */}
+            <TopProductsList 
+              timeFrame={appliedTimeFrame}
+              onProductSelect={setSelectedProduct}
+            />
+          </>
+        )}
+
         {/* Product Selection Section */}
         <Card className="mb-8 shadow-lg border-0 bg-white/80 backdrop-blur">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
               <Search className="w-5 h-5" />
-              Product Selection
+              {selectedProduct ? 'Selected Product' : 'Product Selection'}
             </CardTitle>
+            {selectedProduct && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedProduct('')}
+                className="w-fit"
+              >
+                ← Back to Portfolio Overview
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <ProductGrid 

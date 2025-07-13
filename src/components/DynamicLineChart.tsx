@@ -6,14 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Maximize } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useDynamicChartData } from '@/hooks/useDynamicChartData';
+import { usePortfolioChartData } from '@/hooks/usePortfolioChartData';
 import MetricSelector, { MetricType } from '@/components/chart/MetricSelector';
 import DynamicChartTooltip from '@/components/chart/DynamicChartTooltip';
 import DynamicChartModal from '@/components/chart/DynamicChartModal';
 import { getAxisId, formatDollarAxis, formatNumberAxis, COUNT_METRICS } from '@/utils/chartAxisUtils';
 
 interface DynamicLineChartProps {
-  productId: string;
+  productId?: string;
   timeFrame: { start: string; end: string };
+  isPortfolio?: boolean;
+  title?: string;
 }
 
 const METRIC_COLORS: Record<MetricType, string> = {
@@ -26,12 +29,16 @@ const METRIC_COLORS: Record<MetricType, string> = {
   profit: '#10b981'
 };
 
-const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
+const DynamicLineChart = ({ productId, timeFrame, isPortfolio = false, title }: DynamicLineChartProps) => {
   const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>(['revenue']);
   const [showComparison, setShowComparison] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, hasData } = useDynamicChartData(productId, timeFrame);
+  // Use appropriate hook based on whether it's portfolio or product view
+  const productData = useDynamicChartData(productId || '', timeFrame);
+  const portfolioData = usePortfolioChartData(timeFrame);
+  
+  const { data, hasData } = isPortfolio ? portfolioData : productData;
 
   const handleOpenFullscreen = () => {
     setIsModalOpen(true);
@@ -45,13 +52,15 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
   const hasCountMetrics = selectedMetrics.some(metric => COUNT_METRICS.includes(metric));
   const hasMoneyMetrics = selectedMetrics.some(metric => !COUNT_METRICS.includes(metric));
 
+  const chartTitle = title || 'Performance Metrics';
+
   // Show empty state if no data or no metrics selected
   if (!hasData || selectedMetrics.length === 0) {
     return (
       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg text-gray-800 flex items-center justify-between">
-            <span>Performance Metrics</span>
+            <span>{chartTitle}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -70,16 +79,18 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
                 selectedMetrics={selectedMetrics}
                 onMetricsChange={setSelectedMetrics}
               />
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="comparison-toggle"
-                  checked={showComparison}
-                  onCheckedChange={setShowComparison}
-                />
-                <label htmlFor="comparison-toggle" className="text-sm font-medium">
-                  Compare with previous period
-                </label>
-              </div>
+              {!isPortfolio && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="comparison-toggle"
+                    checked={showComparison}
+                    onCheckedChange={setShowComparison}
+                  />
+                  <label htmlFor="comparison-toggle" className="text-sm font-medium">
+                    Compare with previous period
+                  </label>
+                </div>
+              )}
             </div>
           </div>
           <div className="h-64 flex items-center justify-center text-gray-500">
@@ -98,7 +109,7 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
       <Card className="shadow-lg border-0 bg-white/80 backdrop-blur">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg text-gray-800 flex items-center justify-between">
-            <span>Performance Metrics</span>
+            <span>{chartTitle}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -117,16 +128,18 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
                 selectedMetrics={selectedMetrics}
                 onMetricsChange={setSelectedMetrics}
               />
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="comparison-toggle"
-                  checked={showComparison}
-                  onCheckedChange={setShowComparison}
-                />
-                <label htmlFor="comparison-toggle" className="text-sm font-medium">
-                  Compare with previous period
-                </label>
-              </div>
+              {!isPortfolio && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="comparison-toggle"
+                    checked={showComparison}
+                    onCheckedChange={setShowComparison}
+                  />
+                  <label htmlFor="comparison-toggle" className="text-sm font-medium">
+                    Compare with previous period
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
@@ -181,8 +194,8 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
                   />
                 ))}
 
-                {/* Previous period lines (if comparison is enabled) */}
-                {showComparison && selectedMetrics.map((metric) => (
+                {/* Previous period lines (if comparison is enabled and not portfolio) */}
+                {!isPortfolio && showComparison && selectedMetrics.map((metric) => (
                   <Line
                     key={`${metric}-prev`}
                     type="monotone"
@@ -207,9 +220,9 @@ const DynamicLineChart = ({ productId, timeFrame }: DynamicLineChartProps) => {
         onClose={handleCloseModal}
         data={data}
         selectedMetrics={selectedMetrics}
-        showComparison={showComparison}
+        showComparison={!isPortfolio && showComparison}
         metricColors={METRIC_COLORS}
-        title="Performance Metrics - Fullscreen View"
+        title={`${chartTitle} - Fullscreen View`}
       />
     </>
   );
