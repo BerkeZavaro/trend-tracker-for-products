@@ -4,7 +4,7 @@ import { useProductAnalysis } from './useProductAnalysis';
 import { usePortfolioDistribution } from './usePortfolioDistribution';
 import { PortfolioMetrics } from '@/types/portfolioTypes';
 
-export { PortfolioMetrics, TopProduct } from '@/types/portfolioTypes';
+export type { PortfolioMetrics, TopProduct } from '@/types/portfolioTypes';
 
 export const usePortfolioMetrics = (timeFrame: { start: string; end: string }) => {
   const { calculatePortfolioMetrics: calculateBaseMetrics } = usePortfolioCalculations(timeFrame);
