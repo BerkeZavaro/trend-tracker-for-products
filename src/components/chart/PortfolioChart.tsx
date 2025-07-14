@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { Switch } from '@/components/ui/switch';
 import { usePortfolioChartData } from '@/hooks/usePortfolioChartData';
 import MetricSelector, { MetricType } from './MetricSelector';
 import BaseChart from './BaseChart';
@@ -11,6 +12,7 @@ interface PortfolioChartProps {
 
 const PortfolioChart = ({ timeFrame, title = 'Portfolio Performance Overview' }: PortfolioChartProps) => {
   const [selectedMetrics, setSelectedMetrics] = useState<MetricType[]>(['revenue']);
+  const [showComparison, setShowComparison] = useState(false);
 
   const { data, hasData } = usePortfolioChartData(timeFrame);
 
@@ -18,7 +20,7 @@ const PortfolioChart = ({ timeFrame, title = 'Portfolio Performance Overview' }:
     <BaseChart
       data={hasData ? data : []}
       selectedMetrics={selectedMetrics}
-      showComparison={false}
+      showComparison={showComparison}
       title={title}
     >
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -26,6 +28,16 @@ const PortfolioChart = ({ timeFrame, title = 'Portfolio Performance Overview' }:
           selectedMetrics={selectedMetrics}
           onMetricsChange={setSelectedMetrics}
         />
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="portfolio-comparison-toggle"
+            checked={showComparison}
+            onCheckedChange={setShowComparison}
+          />
+          <label htmlFor="portfolio-comparison-toggle" className="text-sm font-medium">
+            Compare with previous period
+          </label>
+        </div>
       </div>
     </BaseChart>
   );
