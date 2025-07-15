@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart } from 'lucide-react';
+import { formatCurrencyWithDecimals } from '@/utils/performanceMetrics';
 
 interface OrdersCardProps {
   totalOrders: number;
@@ -24,7 +25,7 @@ const OrdersCard = ({ totalOrders, avgSale, formatCurrency }: OrdersCardProps) =
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">
-            Avg Sale: {formatCurrency(avgSale)}
+            Avg Sale: {formatCurrencyWithDecimals(avgSale)}
           </span>
         </div>
       </CardContent>

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Target, Package, PieChart, MousePointer } from 'lucide-react';
 import { usePortfolioMetrics } from '@/hooks/usePortfolioMetrics';
+import { formatCurrencyWithDecimals } from '@/utils/performanceMetrics';
 
 interface PortfolioMetricsCardsProps {
   timeFrame: { start: string; end: string };
@@ -79,7 +80,7 @@ const PortfolioMetricsCards = ({ timeFrame }: PortfolioMetricsCardsProps) => {
             {formatNumber(metrics.totalOrders)}
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Avg: {formatCurrency(metrics.avgOrderValue)} per order
+            Avg: {formatCurrencyWithDecimals(metrics.avgOrderValue)} per order
           </p>
         </CardContent>
       </Card>

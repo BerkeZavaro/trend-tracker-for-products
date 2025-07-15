@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Target } from 'lucide-react';
+import { formatCurrencyWithDecimals } from '@/utils/performanceMetrics';
 
 interface CPACardProps {
   avgAdjustedCPA: number;
@@ -31,7 +32,7 @@ const CPACard = ({ avgAdjustedCPA, avgSale, totalOrders, formatCurrency }: CPACa
                 {avgAdjustedCPA < avgSale ? '✅ Healthy' : '⚠️ High'}
               </Badge>
               <span className="text-xs text-gray-500">
-                vs {formatCurrency(avgSale)} avg sale
+                vs {formatCurrencyWithDecimals(avgSale)} avg sale
               </span>
             </>
           ) : (

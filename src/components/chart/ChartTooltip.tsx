@@ -1,5 +1,6 @@
 
 import { formatValue } from '@/utils/chartUtils';
+import { formatCurrencyWithDecimals } from '@/utils/performanceMetrics';
 
 interface ChartTooltipProps {
   active?: boolean;
@@ -27,7 +28,7 @@ const ChartTooltip = ({ active, payload, label, isRevenue }: ChartTooltipProps) 
         {!isRevenue && averageSale !== undefined && (
           <>
             <p className="text-sm font-semibold text-orange-600">
-              Avg Sale: {formatValue(averageSale, true)}
+              Avg Sale: {formatCurrencyWithDecimals(averageSale)}
             </p>
             {averageSale > 0 && currentValue > 0 && (
               <p className="text-sm text-gray-700 font-medium">
@@ -44,7 +45,7 @@ const ChartTooltip = ({ active, payload, label, isRevenue }: ChartTooltipProps) 
         {!isRevenue && previousYearAverageSale !== null && previousYearAverageSale !== undefined && (
           <>
             <p className="text-sm text-orange-400">
-              Previous Year Avg Sale: {formatValue(previousYearAverageSale, true)}
+              Previous Year Avg Sale: {formatCurrencyWithDecimals(previousYearAverageSale)}
             </p>
             {previousYearAverageSale > 0 && previousYear !== null && previousYear !== undefined && previousYear > 0 && (
               <p className="text-sm text-gray-500">
