@@ -1,5 +1,6 @@
 
 import { formatValue } from '@/utils/chartUtils';
+import { formatCurrencyWithDecimals } from '@/utils/performanceMetrics';
 import { MetricType } from './MetricSelector';
 
 interface DynamicChartTooltipProps {
@@ -27,7 +28,10 @@ const formatMetricValue = (value: number, metric: string): string => {
   if (metric === 'orders') {
     return value.toLocaleString();
   }
-  if (metric === 'revenue' || metric === 'adSpend' || metric === 'totalCost' || metric === 'avgOrderValue' || metric === 'profit') {
+  if (metric === 'avgOrderValue') {
+    return formatCurrencyWithDecimals(value);
+  }
+  if (metric === 'revenue' || metric === 'adSpend' || metric === 'totalCost' || metric === 'profit') {
     return formatValue(value, true);
   }
   if (metric === 'adjustedCpa') {
