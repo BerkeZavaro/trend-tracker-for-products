@@ -3,26 +3,14 @@ import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 import { normalizeDate } from '@/utils/chartUtils';
 import { MetricDataPoint } from './useDynamicChartData';
+import { ComparisonConfig } from '@/types/comparisonTypes';
+import { getComparisonPeriod } from '@/utils/comparisonUtils';
 
-export const usePortfolioChartData = (timeFrame: { start: string; end: string }) => {
+export const usePortfolioChartData = (
+  timeFrame: { start: string; end: string },
+  comparisonConfig: ComparisonConfig = { type: 'none' }
+) => {
   const { uploadedData, isDataLoaded } = useData();
-
-  const calculatePreviousPeriod = () => {
-    const startDate = new Date(timeFrame.start + '-01');
-    const endDate = new Date(timeFrame.end + '-01');
-    const periodLength = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
-                        (endDate.getMonth() - startDate.getMonth()) + 1;
-    
-    const previousEndDate = new Date(startDate);
-    previousEndDate.setMonth(previousEndDate.getMonth() - 1);
-    const previousStartDate = new Date(previousEndDate);
-    previousStartDate.setMonth(previousStartDate.getMonth() - periodLength + 1);
-    
-    return {
-      start: previousStartDate.toISOString().slice(0, 7),
-      end: previousEndDate.toISOString().slice(0, 7)
-    };
-  };
 
   const generatePortfolioChartData = (): MetricDataPoint[] => {
     if (!isDataLoaded) return [];
@@ -32,11 +20,15 @@ export const usePortfolioChartData = (timeFrame: { start: string; end: string })
       isDateInRange(item.month, timeFrame.start, timeFrame.end, uploadedData)
     );
 
-    // Get previous period data
-    const previousPeriod = calculatePreviousPeriod();
-    const previousPeriodData = uploadedData.filter(item => 
-      isDateInRange(item.month, previousPeriod.start, previousPeriod.end, uploadedData)
-    );
+    // Get comparison period data based on configuration
+    let comparisonData: any[] = [];
+    const comparisonPeriod = getComparisonPeriod(timeFrame.start, timeFrame.end, comparisonConfig);
+    
+    if (comparisonPeriod) {
+      comparisonData = uploadedData.filter(item => 
+        isDateInRange(item.month, comparisonPeriod.start, comparisonPeriod.end, uploadedData)
+      );
+    }
 
     // Group current period data by month
     const monthlyData = new Map<string, {
@@ -77,8 +69,8 @@ export const usePortfolioChartData = (timeFrame: { start: string; end: string })
       }
     });
 
-    // Group previous period data by month
-    const previousMonthlyData = new Map<string, {
+    // Group comparison period data by month
+    const comparisonMonthlyData = new Map<string, {
       revenue: number;
       adSpend: number;
       nonAdCosts: number;
@@ -88,11 +80,11 @@ export const usePortfolioChartData = (timeFrame: { start: string; end: string })
       adjustedCpaCount: number;
     }>();
 
-    previousPeriodData.forEach(item => {
+    comparisonData.forEach(item => {
       const normalizedDate = normalizeDate(item.month, uploadedData);
       
-      if (!previousMonthlyData.has(normalizedDate)) {
-        previousMonthlyData.set(normalizedDate, {
+      if (!comparisonMonthlyData.has(normalizedDate)) {
+        comparisonMonthlyData.set(normalizedDate, {
           revenue: 0,
           adSpend: 0,
           nonAdCosts: 0,
@@ -103,7 +95,7 @@ export const usePortfolioChartData = (timeFrame: { start: string; end: string })
         });
       }
 
-      const monthData = previousMonthlyData.get(normalizedDate)!;
+      const monthData = comparisonMonthlyData.get(normalizedDate)!;
       monthData.revenue += item.revenue || 0;
       monthData.adSpend += item.adSpend || 0;
       monthData.nonAdCosts += item.nonAdCosts || 0;
@@ -133,27 +125,42 @@ export const usePortfolioChartData = (timeFrame: { start: string; end: string })
       const adjustedCpa = data.adjustedCpaCount > 0 ? data.adjustedCpaSum / data.adjustedCpaCount : 0;
       const profit = data.revenue - totalCost;
 
-      // Calculate previous year data for the same month
-      const previousYearDate = new Date(parseInt(year) - 1, parseInt(month) - 1);
-      const previousYearKey = previousYearDate.toISOString().slice(0, 7);
-      const previousData = previousMonthlyData.get(previousYearKey);
+      // Get comparison data
+      let comparison = null;
+      if (comparisonConfig.type !== 'none' && comparisonData.length > 0) {
+        // For portfolio data, we'll use the aggregated comparison data
+        // Map current period months to comparison period months based on configuration
+        let comparisonDate: string | null = null;
+        
+        if (comparisonConfig.type === 'previousYear') {
+          const prevYear = parseInt(year) - 1;
+          comparisonDate = `${prevYear}-${month}`;
+        } else if (comparisonConfig.type === 'precedingPeriod' || comparisonConfig.type === 'customRange') {
+          // For preceding period and custom range, we need to map the months appropriately
+          const currentIndex = sortedDates.indexOf(date);
+          const comparisonDates = Array.from(comparisonMonthlyData.keys()).sort();
+          if (currentIndex < comparisonDates.length) {
+            comparisonDate = comparisonDates[currentIndex];
+          }
+        }
 
-      let previousYear = null;
-      if (previousData) {
-        const prevTotalCost = previousData.adSpend + previousData.nonAdCosts + previousData.thirdPartyCosts;
-        const prevAvgOrderValue = previousData.orders > 0 ? previousData.revenue / previousData.orders : 0;
-        const prevAdjustedCpa = previousData.adjustedCpaCount > 0 ? previousData.adjustedCpaSum / previousData.adjustedCpaCount : 0;
-        const prevProfit = previousData.revenue - prevTotalCost;
+        if (comparisonDate && comparisonMonthlyData.has(comparisonDate)) {
+          const compData = comparisonMonthlyData.get(comparisonDate)!;
+          const compTotalCost = compData.adSpend + compData.nonAdCosts + compData.thirdPartyCosts;
+          const compAvgOrderValue = compData.orders > 0 ? compData.revenue / compData.orders : 0;
+          const compAdjustedCpa = compData.adjustedCpaCount > 0 ? compData.adjustedCpaSum / compData.adjustedCpaCount : 0;
+          const compProfit = compData.revenue - compTotalCost;
 
-        previousYear = {
-          revenue: previousData.revenue,
-          adSpend: previousData.adSpend,
-          totalCost: prevTotalCost,
-          orders: previousData.orders,
-          adjustedCpa: prevAdjustedCpa,
-          avgOrderValue: prevAvgOrderValue,
-          profit: prevProfit
-        };
+          comparison = {
+            revenue: compData.revenue,
+            adSpend: compData.adSpend,
+            totalCost: compTotalCost,
+            orders: compData.orders,
+            adjustedCpa: compAdjustedCpa,
+            avgOrderValue: compAvgOrderValue,
+            profit: compProfit
+          };
+        }
       }
 
       chartData.push({
@@ -165,7 +172,7 @@ export const usePortfolioChartData = (timeFrame: { start: string; end: string })
         adjustedCpa,
         avgOrderValue,
         profit,
-        previousYear
+        previousYear: comparison
       });
     });
 
