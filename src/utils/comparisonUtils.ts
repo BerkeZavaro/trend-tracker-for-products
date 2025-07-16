@@ -42,15 +42,6 @@ export const getComparisonPeriod = (
     case 'precedingPeriod':
       return calculatePrecedingPeriod(mainStart, mainEnd);
     
-    case 'customRange':
-      if (comparisonConfig.customRange) {
-        return {
-          start: comparisonConfig.customRange.start,
-          end: comparisonConfig.customRange.end
-        };
-      }
-      return null;
-    
     default:
       return null;
   }
@@ -62,8 +53,6 @@ export const getComparisonLabel = (comparisonConfig: ComparisonConfig) => {
       return 'Previous Year';
     case 'precedingPeriod':
       return 'Preceding Period';
-    case 'customRange':
-      return 'Custom Range';
     default:
       return '';
   }
