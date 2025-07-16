@@ -57,3 +57,31 @@ export const getComparisonLabel = (comparisonConfig: ComparisonConfig) => {
       return '';
   }
 };
+
+export const formatComparisonMonth = (dateString: string): string => {
+  const [year, month] = dateString.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    year: 'numeric' 
+  });
+};
+
+export const getComparisonLabelWithDate = (comparisonConfig: ComparisonConfig, dateString: string): string => {
+  const baseLabel = getComparisonLabel(comparisonConfig);
+  if (!baseLabel || !dateString) return baseLabel;
+  
+  const formattedDate = formatComparisonMonth(dateString);
+  return `${baseLabel} ${formattedDate}`;
+};
+
+export const calculatePreviousYearMonth = (currentMonth: string): string => {
+  // Extract month and year from "Sep 2024" format
+  const monthYearMatch = currentMonth.match(/^([A-Za-z]{3})\s+(\d{4})$/);
+  if (monthYearMatch) {
+    const [, month, year] = monthYearMatch;
+    const previousYear = parseInt(year) - 1;
+    return `${month} ${previousYear}`;
+  }
+  return currentMonth;
+};

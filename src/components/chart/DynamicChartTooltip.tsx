@@ -14,6 +14,7 @@ interface DynamicChartTooltipProps {
   }>;
   label?: string;
   comparisonLabel?: string;
+  comparisonMonth?: string;
 }
 
 const METRIC_LABELS: Record<MetricType, string> = {
@@ -42,11 +43,22 @@ const formatMetricValue = (value: number, metric: string): string => {
   return value.toString();
 };
 
-const DynamicChartTooltip = ({ active, payload, label, comparisonLabel = 'Previous Period' }: DynamicChartTooltipProps) => {
+const DynamicChartTooltip = ({ 
+  active, 
+  payload, 
+  label, 
+  comparisonLabel = 'Previous Period',
+  comparisonMonth 
+}: DynamicChartTooltipProps) => {
   if (active && payload && payload.length) {
     // Group by current vs comparison period
     const currentPeriod = payload.filter(p => !p.dataKey.includes('comparison'));
     const comparisonPeriod = payload.filter(p => p.dataKey.includes('comparison'));
+
+    // Create enhanced comparison label with date
+    const enhancedComparisonLabel = comparisonMonth 
+      ? `${comparisonLabel} ${comparisonMonth}`
+      : comparisonLabel;
 
     return (
       <div className="bg-white p-3 border rounded-lg shadow-lg max-w-xs">
@@ -67,7 +79,7 @@ const DynamicChartTooltip = ({ active, payload, label, comparisonLabel = 'Previo
         {comparisonPeriod.length > 0 && (
           <>
             <div className="border-t pt-2 mt-2">
-              <p className="text-xs text-gray-500 font-medium mb-1">{comparisonLabel}:</p>
+              <p className="text-xs text-gray-500 font-medium mb-1">{enhancedComparisonLabel}:</p>
               {comparisonPeriod.map((entry, index) => {
                 const metric = entry.dataKey.replace('comparison.', '') as MetricType;
                 const label = METRIC_LABELS[metric];

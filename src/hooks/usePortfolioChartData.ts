@@ -4,7 +4,7 @@ import { isDateInRange } from '@/utils/dateUtils';
 import { normalizeDate } from '@/utils/chartUtils';
 import { MetricDataPoint } from './useDynamicChartData';
 import { ComparisonConfig } from '@/types/comparisonTypes';
-import { getComparisonPeriod } from '@/utils/comparisonUtils';
+import { getComparisonPeriod, formatComparisonMonth } from '@/utils/comparisonUtils';
 
 export const usePortfolioChartData = (
   timeFrame: { start: string; end: string },
@@ -136,14 +136,16 @@ export const usePortfolioChartData = (
 
       // Get comparison data
       let comparisonMetrics: MetricDataPoint['comparison'] = undefined;
+      let comparisonMonthLabel = '';
+      
       if (comparisonConfig.type !== 'none' && comparisonData.length > 0) {
         let comparisonDate: string | null = null;
         
         if (comparisonConfig.type === 'previousYear') {
           const prevYear = parseInt(year) - 1;
           comparisonDate = `${prevYear}-${month}`;
-        } else if (comparisonConfig.type === 'precedingPeriod' || comparisonConfig.type === 'customRange') {
-          // For preceding period and custom range, align by index
+        } else if (comparisonConfig.type === 'precedingPeriod') {
+          // For preceding period, align by index
           if (index < sortedComparisonDates.length) {
             comparisonDate = sortedComparisonDates[index];
           }
@@ -165,6 +167,8 @@ export const usePortfolioChartData = (
             avgOrderValue: compAvgOrderValue,
             profit: compProfit
           };
+
+          comparisonMonthLabel = formatComparisonMonth(comparisonDate);
         }
       }
 
@@ -177,7 +181,8 @@ export const usePortfolioChartData = (
         adjustedCpa,
         avgOrderValue,
         profit,
-        comparison: comparisonMetrics
+        comparison: comparisonMetrics,
+        comparisonMonth: comparisonMonthLabel
       });
     });
 

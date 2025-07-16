@@ -1,6 +1,7 @@
 
 import { formatValue } from '@/utils/chartUtils';
 import { formatCurrencyWithDecimals } from '@/utils/performanceMetrics';
+import { calculatePreviousYearMonth } from '@/utils/comparisonUtils';
 
 interface ChartTooltipProps {
   active?: boolean;
@@ -18,6 +19,9 @@ const ChartTooltip = ({ active, payload, label, isRevenue }: ChartTooltipProps) 
     const previousYear = payload.find(p => p.dataKey === 'previousYear')?.value;
     const averageSale = payload.find(p => p.dataKey === 'averageSale')?.value;
     const previousYearAverageSale = payload.find(p => p.dataKey === 'previousYearAverageSale')?.value;
+
+    // Calculate previous year month label
+    const previousYearLabel = label ? calculatePreviousYearMonth(label) : '';
 
     return (
       <div className="bg-white p-3 border rounded-lg shadow-lg">
@@ -39,13 +43,13 @@ const ChartTooltip = ({ active, payload, label, isRevenue }: ChartTooltipProps) 
         )}
         {previousYear !== null && previousYear !== undefined && (
           <p className="text-sm text-gray-600">
-            Previous Year {isRevenue ? 'Revenue' : 'CPA'}: {formatValue(previousYear, isRevenue)}
+            Previous Year {previousYearLabel}: {formatValue(previousYear, isRevenue)}
           </p>
         )}
         {!isRevenue && previousYearAverageSale !== null && previousYearAverageSale !== undefined && (
           <>
             <p className="text-sm text-orange-400">
-              Previous Year Avg Sale: {formatCurrencyWithDecimals(previousYearAverageSale)}
+              Previous Year Avg Sale {previousYearLabel}: {formatCurrencyWithDecimals(previousYearAverageSale)}
             </p>
             {previousYearAverageSale > 0 && previousYear !== null && previousYear !== undefined && previousYear > 0 && (
               <p className="text-sm text-gray-500">

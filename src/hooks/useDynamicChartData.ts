@@ -3,7 +3,7 @@ import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 import { normalizeDate } from '@/utils/chartUtils';
 import { ComparisonConfig } from '@/types/comparisonTypes';
-import { getComparisonPeriod } from '@/utils/comparisonUtils';
+import { getComparisonPeriod, formatComparisonMonth } from '@/utils/comparisonUtils';
 
 export interface MetricDataPoint {
   month: string;
@@ -23,6 +23,7 @@ export interface MetricDataPoint {
     avgOrderValue?: number;
     profit?: number;
   };
+  comparisonMonth?: string;
 }
 
 export const useDynamicChartData = (
@@ -104,15 +105,22 @@ export const useDynamicChartData = (
 
       // Find comparison data based on comparison type
       let comparisonItem = null;
+      let comparisonMonthLabel = '';
+      
       if (comparisonConfig.type === 'previousYear') {
         // Previous year logic
         const previousYear = parseInt(year) - 1;
         const previousYearDate = `${previousYear}-${month}`;
         comparisonItem = dataByDate.get(previousYearDate);
+        if (comparisonItem) {
+          comparisonMonthLabel = formatComparisonMonth(previousYearDate);
+        }
       } else if (comparisonPeriod && comparisonConfig.type !== 'none') {
         // For preceding period or custom range, align by index
         if (index < sortedComparisonData.length) {
           comparisonItem = sortedComparisonData[index];
+          const comparisonNormalizedDate = normalizeDate(comparisonItem.month, uploadedData);
+          comparisonMonthLabel = formatComparisonMonth(comparisonNormalizedDate);
         }
       }
       
@@ -147,7 +155,8 @@ export const useDynamicChartData = (
         adjustedCpa,
         avgOrderValue,
         profit,
-        comparison: comparisonMetrics
+        comparison: comparisonMetrics,
+        comparisonMonth: comparisonMonthLabel
       });
     });
 
