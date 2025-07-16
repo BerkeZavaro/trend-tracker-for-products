@@ -14,6 +14,7 @@ interface DynamicChartModalProps {
   showComparison: boolean;
   metricColors: Record<MetricType, string>;
   title: string;
+  comparisonLabel?: string;
 }
 
 const DynamicChartModal = ({ 
@@ -23,7 +24,8 @@ const DynamicChartModal = ({
   selectedMetrics, 
   showComparison, 
   metricColors, 
-  title 
+  title,
+  comparisonLabel = 'Previous Period'
 }: DynamicChartModalProps) => {
   // Check if we need both axes
   const hasCountMetrics = selectedMetrics.some(metric => COUNT_METRICS.includes(metric));
@@ -76,7 +78,7 @@ const DynamicChartModal = ({
                   />
                 )}
                 
-                <Tooltip content={<DynamicChartTooltip />} />
+                <Tooltip content={<DynamicChartTooltip comparisonLabel={comparisonLabel} />} />
                 <Legend />
 
                 {/* Current period lines */}
@@ -93,12 +95,12 @@ const DynamicChartModal = ({
                   />
                 ))}
 
-                {/* Previous period lines (if comparison is enabled) */}
+                {/* Comparison period lines (if comparison is enabled) */}
                 {showComparison && selectedMetrics.map((metric) => (
                   <Line
-                    key={`${metric}-prev`}
+                    key={`${metric}-comparison`}
                     type="monotone"
-                    dataKey={`previousYear.${metric}`}
+                    dataKey={`comparison.${metric}`}
                     stroke={metricColors[metric]}
                     strokeWidth={3}
                     strokeDasharray="8 8"

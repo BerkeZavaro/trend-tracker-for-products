@@ -14,7 +14,7 @@ export interface MetricDataPoint {
   adjustedCpa: number;
   avgOrderValue: number;
   profit: number;
-  previousYear?: {
+  comparison?: {
     revenue?: number;
     adSpend?: number;
     totalCost?: number;
@@ -57,13 +57,6 @@ export const useDynamicChartData = (
     );
   }
 
-  // Create comparison data lookup
-  const comparisonByDate = new Map();
-  comparisonData.forEach(item => {
-    const normalizedDate = normalizeDate(item.month, uploadedData);
-    comparisonByDate.set(normalizedDate, item);
-  });
-
   // Generate chart data with all metrics
   const generateChartData = (): MetricDataPoint[] => {
     const chartData: MetricDataPoint[] = [];
@@ -75,7 +68,22 @@ export const useDynamicChartData = (
       return aDate.localeCompare(bDate);
     });
 
-    sortedData.forEach(item => {
+    // Sort comparison data for proper alignment
+    const sortedComparisonData = [...comparisonData].sort((a, b) => {
+      const aDate = normalizeDate(a.month, uploadedData);
+      const bDate = normalizeDate(b.month, uploadedData);
+      return aDate.localeCompare(bDate);
+    });
+
+    console.log('Product Chart Data Generation:', {
+      comparisonType: comparisonConfig.type,
+      mainPeriod: timeFrame,
+      comparisonPeriod,
+      mainDataPoints: sortedData.length,
+      comparisonDataPoints: sortedComparisonData.length
+    });
+
+    sortedData.forEach((item, index) => {
       const normalizedDate = normalizeDate(item.month, uploadedData);
       const [year, month] = normalizedDate.split('-');
       
@@ -97,26 +105,18 @@ export const useDynamicChartData = (
       // Find comparison data based on comparison type
       let comparisonItem = null;
       if (comparisonConfig.type === 'previousYear') {
-        // Previous year logic (existing)
+        // Previous year logic
         const previousYear = parseInt(year) - 1;
         const previousYearDate = `${previousYear}-${month}`;
         comparisonItem = dataByDate.get(previousYearDate);
       } else if (comparisonPeriod && comparisonConfig.type !== 'none') {
-        // For preceding period or custom range, we need to map months
-        // This is a simplified approach - you might want more sophisticated mapping
-        const sortedComparisonData = [...comparisonData].sort((a, b) => {
-          const aDate = normalizeDate(a.month, uploadedData);
-          const bDate = normalizeDate(b.month, uploadedData);
-          return aDate.localeCompare(bDate);
-        });
-        
-        const currentIndex = sortedData.findIndex(d => normalizeDate(d.month, uploadedData) === normalizedDate);
-        if (currentIndex < sortedComparisonData.length) {
-          comparisonItem = sortedComparisonData[currentIndex];
+        // For preceding period or custom range, align by index
+        if (index < sortedComparisonData.length) {
+          comparisonItem = sortedComparisonData[index];
         }
       }
       
-      let previousYearData: MetricDataPoint['previousYear'] = {};
+      let comparisonMetrics: MetricDataPoint['comparison'] = undefined;
       
       if (comparisonItem) {
         const prevRevenue = comparisonItem.revenue || 0;
@@ -127,7 +127,7 @@ export const useDynamicChartData = (
         const prevAvgOrderValue = prevOrders > 0 ? prevRevenue / prevOrders : 0;
         const prevProfit = prevRevenue - prevTotalCost;
 
-        previousYearData = {
+        comparisonMetrics = {
           revenue: prevRevenue,
           adSpend: prevAdSpend,
           totalCost: prevTotalCost,
@@ -147,7 +147,7 @@ export const useDynamicChartData = (
         adjustedCpa,
         avgOrderValue,
         profit,
-        previousYear: previousYearData
+        comparison: comparisonMetrics
       });
     });
 

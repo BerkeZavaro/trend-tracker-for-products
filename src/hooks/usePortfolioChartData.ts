@@ -30,6 +30,14 @@ export const usePortfolioChartData = (
       );
     }
 
+    console.log('Portfolio Chart Data Generation:', {
+      comparisonType: comparisonConfig.type,
+      mainPeriod: timeFrame,
+      comparisonPeriod,
+      mainDataPoints: filteredData.length,
+      comparisonDataPoints: comparisonData.length
+    });
+
     // Group current period data by month
     const monthlyData = new Map<string, {
       revenue: number;
@@ -111,8 +119,9 @@ export const usePortfolioChartData = (
     // Convert to chart data format
     const chartData: MetricDataPoint[] = [];
     const sortedDates = Array.from(monthlyData.keys()).sort();
+    const sortedComparisonDates = Array.from(comparisonMonthlyData.keys()).sort();
 
-    sortedDates.forEach(date => {
+    sortedDates.forEach((date, index) => {
       const [year, month] = date.split('-');
       const monthLabel = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { 
         month: 'short', 
@@ -126,21 +135,17 @@ export const usePortfolioChartData = (
       const profit = data.revenue - totalCost;
 
       // Get comparison data
-      let comparison = null;
+      let comparisonMetrics: MetricDataPoint['comparison'] = undefined;
       if (comparisonConfig.type !== 'none' && comparisonData.length > 0) {
-        // For portfolio data, we'll use the aggregated comparison data
-        // Map current period months to comparison period months based on configuration
         let comparisonDate: string | null = null;
         
         if (comparisonConfig.type === 'previousYear') {
           const prevYear = parseInt(year) - 1;
           comparisonDate = `${prevYear}-${month}`;
         } else if (comparisonConfig.type === 'precedingPeriod' || comparisonConfig.type === 'customRange') {
-          // For preceding period and custom range, we need to map the months appropriately
-          const currentIndex = sortedDates.indexOf(date);
-          const comparisonDates = Array.from(comparisonMonthlyData.keys()).sort();
-          if (currentIndex < comparisonDates.length) {
-            comparisonDate = comparisonDates[currentIndex];
+          // For preceding period and custom range, align by index
+          if (index < sortedComparisonDates.length) {
+            comparisonDate = sortedComparisonDates[index];
           }
         }
 
@@ -151,7 +156,7 @@ export const usePortfolioChartData = (
           const compAdjustedCpa = compData.adjustedCpaCount > 0 ? compData.adjustedCpaSum / compData.adjustedCpaCount : 0;
           const compProfit = compData.revenue - compTotalCost;
 
-          comparison = {
+          comparisonMetrics = {
             revenue: compData.revenue,
             adSpend: compData.adSpend,
             totalCost: compTotalCost,
@@ -172,7 +177,7 @@ export const usePortfolioChartData = (
         adjustedCpa,
         avgOrderValue,
         profit,
-        previousYear: comparison
+        comparison: comparisonMetrics
       });
     });
 

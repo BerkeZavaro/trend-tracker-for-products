@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -167,7 +166,7 @@ const BaseChart = ({
                   <Line
                     key={`${metric}-comparison`}
                     type="monotone"
-                    dataKey={`previousYear.${metric}`}
+                    dataKey={`comparison.${metric}`}
                     stroke={METRIC_COLORS[metric]}
                     strokeWidth={2}
                     strokeDasharray="5 5"
@@ -192,6 +191,7 @@ const BaseChart = ({
         showComparison={showComparison}
         metricColors={METRIC_COLORS}
         title={`${title} - Fullscreen View`}
+        comparisonLabel={comparisonLabel}
       />
     </>
   );
