@@ -5,12 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, RefreshCw } from 'lucide-react';
+import ComparisonSelector from '@/components/chart/ComparisonSelector';
+import { ComparisonConfig } from '@/types/comparisonTypes';
 
 interface TimeFrameSectionProps {
   pendingTimeFrame: { start: string; end: string };
   setPendingTimeFrame: (timeFrame: { start: string; end: string }) => void;
   pendingAnalysisType?: 'summary' | 'detailed';
   setPendingAnalysisType?: (type: 'summary' | 'detailed') => void;
+  pendingComparisonConfig?: ComparisonConfig;
+  setPendingComparisonConfig?: (config: ComparisonConfig) => void;
   hasUnappliedChanges: boolean;
   handleApplyAnalysis: () => void;
   isPortfolio?: boolean;
@@ -21,6 +25,8 @@ const TimeFrameSection = ({
   setPendingTimeFrame,
   pendingAnalysisType,
   setPendingAnalysisType,
+  pendingComparisonConfig,
+  setPendingComparisonConfig,
   hasUnappliedChanges,
   handleApplyAnalysis,
   isPortfolio = false
@@ -34,7 +40,7 @@ const TimeFrameSection = ({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`grid grid-cols-1 ${isPortfolio ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mb-4`}>
+        <div className={`grid grid-cols-1 ${isPortfolio ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4 mb-4`}>
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Start Date</label>
             <Input
@@ -54,6 +60,14 @@ const TimeFrameSection = ({
               className="w-full"
             />
           </div>
+
+          {/* Comparison Selector */}
+          {pendingComparisonConfig && setPendingComparisonConfig && (
+            <ComparisonSelector
+              comparisonConfig={pendingComparisonConfig}
+              onComparisonChange={setPendingComparisonConfig}
+            />
+          )}
           
           {!isPortfolio && pendingAnalysisType && setPendingAnalysisType && (
             <div className="space-y-2">

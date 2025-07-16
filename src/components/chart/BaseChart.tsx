@@ -9,6 +9,8 @@ import { MetricType } from './MetricSelector';
 import DynamicChartTooltip from './DynamicChartTooltip';
 import DynamicChartModal from './DynamicChartModal';
 import { getAxisId, formatDollarAxis, formatNumberAxis, COUNT_METRICS } from '@/utils/chartAxisUtils';
+import { ComparisonConfig } from '@/types/comparisonTypes';
+import { getComparisonLabel } from '@/utils/comparisonUtils';
 
 export const METRIC_COLORS: Record<MetricType, string> = {
   revenue: '#22c55e',
@@ -24,11 +26,19 @@ interface BaseChartProps {
   data: MetricDataPoint[];
   selectedMetrics: MetricType[];
   showComparison?: boolean;
+  comparisonConfig?: ComparisonConfig;
   title: string;
   children: React.ReactNode;
 }
 
-const BaseChart = ({ data, selectedMetrics, showComparison = false, title, children }: BaseChartProps) => {
+const BaseChart = ({ 
+  data, 
+  selectedMetrics, 
+  showComparison = false, 
+  comparisonConfig = { type: 'none' },
+  title, 
+  children 
+}: BaseChartProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenFullscreen = () => {
@@ -75,6 +85,8 @@ const BaseChart = ({ data, selectedMetrics, showComparison = false, title, child
       </Card>
     );
   }
+
+  const comparisonLabel = getComparisonLabel(comparisonConfig);
 
   return (
     <>
@@ -132,7 +144,7 @@ const BaseChart = ({ data, selectedMetrics, showComparison = false, title, child
                   />
                 )}
                 
-                <Tooltip content={<DynamicChartTooltip />} />
+                <Tooltip content={<DynamicChartTooltip comparisonLabel={comparisonLabel} />} />
                 <Legend />
 
                 {/* Current period lines */}
@@ -146,13 +158,14 @@ const BaseChart = ({ data, selectedMetrics, showComparison = false, title, child
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                     yAxisId={getAxisId(metric)}
+                    name={metric.charAt(0).toUpperCase() + metric.slice(1)}
                   />
                 ))}
 
-                {/* Previous period lines (if comparison is enabled) */}
+                {/* Comparison lines (if comparison is enabled) */}
                 {showComparison && selectedMetrics.map((metric) => (
                   <Line
-                    key={`${metric}-prev`}
+                    key={`${metric}-comparison`}
                     type="monotone"
                     dataKey={`previousYear.${metric}`}
                     stroke={METRIC_COLORS[metric]}
@@ -162,6 +175,7 @@ const BaseChart = ({ data, selectedMetrics, showComparison = false, title, child
                     activeDot={{ r: 5 }}
                     opacity={0.7}
                     yAxisId={getAxisId(metric)}
+                    name={`${metric.charAt(0).toUpperCase() + metric.slice(1)} (${comparisonLabel})`}
                   />
                 ))}
               </LineChart>

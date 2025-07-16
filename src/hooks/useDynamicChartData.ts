@@ -2,6 +2,8 @@
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 import { normalizeDate } from '@/utils/chartUtils';
+import { ComparisonConfig } from '@/types/comparisonTypes';
+import { getComparisonPeriod } from '@/utils/comparisonUtils';
 
 export interface MetricDataPoint {
   month: string;
@@ -25,7 +27,8 @@ export interface MetricDataPoint {
 
 export const useDynamicChartData = (
   productId: string,
-  timeFrame: { start: string; end: string }
+  timeFrame: { start: string; end: string },
+  comparisonConfig: ComparisonConfig = { type: 'none' }
 ) => {
   const { getProductData, uploadedData } = useData();
   const productData = getProductData(productId);
@@ -40,6 +43,25 @@ export const useDynamicChartData = (
   productData.forEach(item => {
     const normalizedDate = normalizeDate(item.month, uploadedData);
     dataByDate.set(normalizedDate, item);
+  });
+
+  // Get comparison period data if comparison is enabled
+  const comparisonPeriod = comparisonConfig.type !== 'none' 
+    ? getComparisonPeriod(timeFrame.start, timeFrame.end, comparisonConfig)
+    : null;
+
+  let comparisonData: any[] = [];
+  if (comparisonPeriod) {
+    comparisonData = productData.filter(item => 
+      isDateInRange(item.month, comparisonPeriod.start, comparisonPeriod.end, uploadedData)
+    );
+  }
+
+  // Create comparison data lookup
+  const comparisonByDate = new Map();
+  comparisonData.forEach(item => {
+    const normalizedDate = normalizeDate(item.month, uploadedData);
+    comparisonByDate.set(normalizedDate, item);
   });
 
   // Generate chart data with all metrics
@@ -72,19 +94,36 @@ export const useDynamicChartData = (
       const avgOrderValue = orders > 0 ? revenue / orders : 0;
       const profit = revenue - totalCost;
 
-      // Find previous year data
-      const previousYear = parseInt(year) - 1;
-      const previousYearDate = `${previousYear}-${month}`;
-      const previousYearItem = dataByDate.get(previousYearDate);
+      // Find comparison data based on comparison type
+      let comparisonItem = null;
+      if (comparisonConfig.type === 'previousYear') {
+        // Previous year logic (existing)
+        const previousYear = parseInt(year) - 1;
+        const previousYearDate = `${previousYear}-${month}`;
+        comparisonItem = dataByDate.get(previousYearDate);
+      } else if (comparisonPeriod && comparisonConfig.type !== 'none') {
+        // For preceding period or custom range, we need to map months
+        // This is a simplified approach - you might want more sophisticated mapping
+        const sortedComparisonData = [...comparisonData].sort((a, b) => {
+          const aDate = normalizeDate(a.month, uploadedData);
+          const bDate = normalizeDate(b.month, uploadedData);
+          return aDate.localeCompare(bDate);
+        });
+        
+        const currentIndex = sortedData.findIndex(d => normalizeDate(d.month, uploadedData) === normalizedDate);
+        if (currentIndex < sortedComparisonData.length) {
+          comparisonItem = sortedComparisonData[currentIndex];
+        }
+      }
       
       let previousYearData: MetricDataPoint['previousYear'] = {};
       
-      if (previousYearItem) {
-        const prevRevenue = previousYearItem.revenue || 0;
-        const prevAdSpend = previousYearItem.adSpend || 0;
-        const prevTotalCost = (previousYearItem.adSpend || 0) + (previousYearItem.nonAdCosts || 0) + (previousYearItem.thirdPartyCosts || 0);
-        const prevOrders = previousYearItem.orders || 0;
-        const prevAdjustedCpa = previousYearItem.adjustedCpa || 0;
+      if (comparisonItem) {
+        const prevRevenue = comparisonItem.revenue || 0;
+        const prevAdSpend = comparisonItem.adSpend || 0;
+        const prevTotalCost = (comparisonItem.adSpend || 0) + (comparisonItem.nonAdCosts || 0) + (comparisonItem.thirdPartyCosts || 0);
+        const prevOrders = comparisonItem.orders || 0;
+        const prevAdjustedCpa = comparisonItem.adjustedCpa || 0;
         const prevAvgOrderValue = prevOrders > 0 ? prevRevenue / prevOrders : 0;
         const prevProfit = prevRevenue - prevTotalCost;
 
