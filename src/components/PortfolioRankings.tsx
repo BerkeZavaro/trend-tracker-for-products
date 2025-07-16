@@ -19,9 +19,9 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
     getDeclinedProducts 
   } = usePortfolioMetrics(timeFrame);
 
-  const topRevenue = getTopProducts(5);
-  const topProfit = getTopProductsByProfit(5);
-  const declinedProducts = getDeclinedProducts(5);
+  const topRevenue = getTopProducts(10);
+  const topProfit = getTopProductsByProfit(10);
+  const declinedProducts = getDeclinedProducts(10);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -55,31 +55,51 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-2">
         {products.map((product, index) => (
           <div 
             key={product.id}
-            className="flex items-center justify-between p-4 rounded-lg border bg-gray-50/50 hover:bg-gray-100/50 transition-colors"
+            className="p-3 rounded-lg border bg-gray-50/50 hover:bg-gray-100/50 transition-colors"
           >
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
-                  #{index + 1}
+            {/* Line 1: Ranking, Product Info, Orders */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex-shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600">
+                    #{index + 1}
+                  </div>
+                </div>
+                
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-900 truncate text-sm">
+                      {product.name}
+                    </h3>
+                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                      {product.category}
+                    </Badge>
+                  </div>
                 </div>
               </div>
               
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900 truncate">
-                    {product.name}
-                  </h3>
-                  <Badge variant="outline" className="text-xs">
-                    {product.category}
-                  </Badge>
-                </div>
+              <div className="text-right flex-shrink-0">
                 <p className="text-sm text-gray-500">
                   {product.brand} • {formatNumber(product.orders)} orders
                 </p>
+              </div>
+            </div>
+
+            {/* Line 2: Metric Value and Analyze Button */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900 text-sm">
+                  {showMetric === 'revenue' && formatCurrency(product.revenue)}
+                  {showMetric === 'profitMargin' && `${product.profitMargin.toFixed(1)}%`}
+                  {showMetric === 'profit' && formatCurrency(product.profit)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {metricLabel}
+                </div>
                 {showDecline && product.previousPeriodProfit && (
                   <p className="text-xs text-red-600 mt-1">
                     Previous: {formatCurrency(product.previousPeriodProfit)} → 
@@ -88,28 +108,15 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
                   </p>
                 )}
               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="font-semibold text-gray-900">
-                  {showMetric === 'revenue' && formatCurrency(product.revenue)}
-                  {showMetric === 'profitMargin' && `${product.profitMargin.toFixed(1)}%`}
-                  {showMetric === 'profit' && formatCurrency(product.profit)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {metricLabel}
-                </div>
-              </div>
               
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onProductSelect(product.id)}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs h-8 px-3"
               >
                 Analyze
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
           </div>
@@ -144,7 +151,7 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-green-600" />
-                Top 5 Products by Revenue
+                Top 10 Products by Revenue
               </h3>
               <p className="text-sm text-gray-600">Highest revenue generators in your portfolio</p>
             </div>
@@ -160,7 +167,7 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-blue-600" />
-                Top 5 Products by Total Profit
+                Top 10 Products by Total Profit
               </h3>
               <p className="text-sm text-gray-600">Products contributing the most absolute profit to your business</p>
             </div>
