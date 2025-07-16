@@ -55,54 +55,55 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
     }
 
     return (
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {products.map((product, index) => (
           <div 
             key={product.id}
             className="p-3 rounded-lg border bg-gray-50/50 hover:bg-gray-100/50 transition-colors"
           >
-            {/* Line 1: Ranking, Product Info, Orders */}
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="flex-shrink-0">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600">
+            {/* Header: Ranking and Product Info */}
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start gap-2 flex-1 min-w-0">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-xs font-semibold text-blue-600">
                     #{index + 1}
                   </div>
                 </div>
                 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900 truncate text-sm">
-                      {product.name}
-                    </h3>
-                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                  <h3 className="font-semibold text-gray-900 truncate text-sm leading-tight mb-1">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-xs px-1.5 py-0.5">
                       {product.category}
                     </Badge>
+                    <span className="text-xs text-gray-500">{product.brand}</span>
                   </div>
                 </div>
               </div>
-              
-              <div className="text-right flex-shrink-0">
-                <p className="text-sm text-gray-500">
-                  {product.brand} • {formatNumber(product.orders)} orders
-                </p>
-              </div>
             </div>
 
-            {/* Line 2: Metric Value and Analyze Button */}
-            <div className="flex items-center justify-between">
+            {/* Orders Info */}
+            <div className="mb-2">
+              <p className="text-xs text-gray-600">
+                {formatNumber(product.orders)} orders
+              </p>
+            </div>
+
+            {/* Metric and Button */}
+            <div className="flex items-end justify-between">
               <div className="flex-1">
                 <div className="font-semibold text-gray-900 text-sm">
                   {showMetric === 'revenue' && formatCurrency(product.revenue)}
                   {showMetric === 'profitMargin' && `${product.profitMargin.toFixed(1)}%`}
                   {showMetric === 'profit' && formatCurrency(product.profit)}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 mb-1">
                   {metricLabel}
                 </div>
                 {showDecline && product.previousPeriodProfit && (
-                  <p className="text-xs text-red-600 mt-1">
-                    Previous: {formatCurrency(product.previousPeriodProfit)} → 
+                  <p className="text-xs text-red-600">
                     Declined by {formatCurrency(product.profitDecline || 0)} 
                     ({(product.profitDeclinePercentage || 0).toFixed(1)}%)
                   </p>
@@ -113,7 +114,7 @@ const PortfolioRankings = ({ timeFrame, onProductSelect }: PortfolioRankingsProp
                 variant="ghost"
                 size="sm"
                 onClick={() => onProductSelect(product.id)}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs h-8 px-3"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs h-7 px-2 ml-2"
               >
                 Analyze
                 <ChevronRight className="w-3 h-3 ml-1" />
