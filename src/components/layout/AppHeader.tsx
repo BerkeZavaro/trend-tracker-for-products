@@ -1,12 +1,20 @@
 
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrendingUp, Calendar, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppHeaderProps {
   appliedTimeFrame: { start: string; end: string };
 }
 
 const AppHeader = ({ appliedTimeFrame }: AppHeaderProps) => {
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <div className="bg-white border-b shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4">
@@ -25,6 +33,15 @@ const AppHeader = ({ appliedTimeFrame }: AppHeaderProps) => {
               <Calendar className="w-4 h-4 mr-2" />
               {appliedTimeFrame.start} to {appliedTimeFrame.end}
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
           </div>
         </div>
       </div>
