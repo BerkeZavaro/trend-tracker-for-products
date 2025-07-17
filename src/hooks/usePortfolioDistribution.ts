@@ -8,8 +8,10 @@ export const usePortfolioDistribution = (timeFrame: { start: string; end: string
   const getPerformanceDistribution = (): PerformanceDistribution => {
     const metrics = getProductMetrics();
     const profitable = metrics.filter(p => p.profit > 0).length;
-    const unprofitable = metrics.filter(p => p.profit <= 0).length;
-    const breakeven = metrics.filter(p => p.profit === 0).length;
+    // Only count products with revenue activity that are unprofitable
+    const unprofitable = metrics.filter(p => p.profit <= 0 && p.revenue > 0).length;
+    // Only count products with revenue activity that break even
+    const breakeven = metrics.filter(p => p.profit === 0 && p.revenue > 0).length;
 
     return {
       profitable,
