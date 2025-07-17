@@ -1,4 +1,3 @@
-
 import { useData } from '@/contexts/DataContext';
 import { isDateInRange } from '@/utils/dateUtils';
 import { TopProduct } from '@/types/portfolioTypes';
@@ -41,6 +40,15 @@ export const useProductAnalysis = (timeFrame: { start: string; end: string }) =>
         adjustedCpa
       };
     });
+  };
+
+  const getUnprofitableProducts = (limit?: number): TopProduct[] => {
+    const metrics = getProductMetrics();
+    const unprofitableProducts = metrics
+      .filter(product => product.profit <= 0 && product.revenue > 0) // Has activity but not profitable
+      .sort((a, b) => a.profit - b.profit); // Sort by worst profit first
+    
+    return limit ? unprofitableProducts.slice(0, limit) : unprofitableProducts;
   };
 
   const calculatePreviousPeriod = () => {
@@ -166,6 +174,7 @@ export const useProductAnalysis = (timeFrame: { start: string; end: string }) =>
 
   return {
     getProductMetrics,
+    getUnprofitableProducts,
     getDeclinedProducts,
     getTopProducts,
     getTopProductsByProfit,

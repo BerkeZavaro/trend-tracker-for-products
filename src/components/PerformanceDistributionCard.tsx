@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { usePortfolioMetrics } from '@/hooks/usePortfolioMetrics';
+import UnprofitableProductsModal from './UnprofitableProductsModal';
+import { Button } from '@/components/ui/button';
 
 interface PerformanceDistributionCardProps {
   timeFrame: { start: string; end: string };
@@ -65,8 +67,18 @@ const PerformanceDistributionCard = ({ timeFrame }: PerformanceDistributionCardP
                 <div className="text-xs text-gray-500">Making Profit</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-red-600">{distribution.unprofitable}</div>
-                <div className="text-xs text-gray-500">Need Attention</div>
+                <UnprofitableProductsModal 
+                  timeFrame={timeFrame} 
+                  unprofitableCount={distribution.unprofitable}
+                >
+                  <Button 
+                    variant="ghost" 
+                    className="p-0 h-auto flex flex-col items-center hover:bg-red-50 rounded-lg p-2"
+                  >
+                    <div className="text-2xl font-bold text-red-600">{distribution.unprofitable}</div>
+                    <div className="text-xs text-gray-500">Need Attention</div>
+                  </Button>
+                </UnprofitableProductsModal>
               </div>
             </div>
           </div>
