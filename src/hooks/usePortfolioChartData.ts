@@ -39,14 +39,14 @@ export const usePortfolioChartData = (
     });
 
     // Group current period data by month
+    // Note: We aggregate totals and calculate portfolio-level adjustedCpa as totalCost/totalOrders
+    // This is the correct weighted calculation, NOT an average of individual product CPAs
     const monthlyData = new Map<string, {
       revenue: number;
       adSpend: number;
       nonAdCosts: number;
       thirdPartyCosts: number;
       orders: number;
-      adjustedCpaSum: number;
-      adjustedCpaCount: number;
     }>();
 
     filteredData.forEach(item => {
@@ -58,9 +58,7 @@ export const usePortfolioChartData = (
           adSpend: 0,
           nonAdCosts: 0,
           thirdPartyCosts: 0,
-          orders: 0,
-          adjustedCpaSum: 0,
-          adjustedCpaCount: 0
+          orders: 0
         });
       }
 
@@ -70,11 +68,6 @@ export const usePortfolioChartData = (
       monthData.nonAdCosts += item.nonAdCosts || 0;
       monthData.thirdPartyCosts += item.thirdPartyCosts || 0;
       monthData.orders += item.orders || 0;
-      
-      if (item.adjustedCpa > 0) {
-        monthData.adjustedCpaSum += item.adjustedCpa;
-        monthData.adjustedCpaCount += 1;
-      }
     });
 
     // Group comparison period data by month
@@ -84,8 +77,6 @@ export const usePortfolioChartData = (
       nonAdCosts: number;
       thirdPartyCosts: number;
       orders: number;
-      adjustedCpaSum: number;
-      adjustedCpaCount: number;
     }>();
 
     comparisonData.forEach(item => {
@@ -97,9 +88,7 @@ export const usePortfolioChartData = (
           adSpend: 0,
           nonAdCosts: 0,
           thirdPartyCosts: 0,
-          orders: 0,
-          adjustedCpaSum: 0,
-          adjustedCpaCount: 0
+          orders: 0
         });
       }
 
@@ -109,11 +98,6 @@ export const usePortfolioChartData = (
       monthData.nonAdCosts += item.nonAdCosts || 0;
       monthData.thirdPartyCosts += item.thirdPartyCosts || 0;
       monthData.orders += item.orders || 0;
-      
-      if (item.adjustedCpa > 0) {
-        monthData.adjustedCpaSum += item.adjustedCpa;
-        monthData.adjustedCpaCount += 1;
-      }
     });
 
     // Convert to chart data format
@@ -131,7 +115,8 @@ export const usePortfolioChartData = (
       const data = monthlyData.get(date)!;
       const totalCost = data.adSpend + data.nonAdCosts + data.thirdPartyCosts;
       const avgOrderValue = data.orders > 0 ? data.revenue / data.orders : 0;
-      const adjustedCpa = data.adjustedCpaCount > 0 ? data.adjustedCpaSum / data.adjustedCpaCount : 0;
+      // Portfolio-level Adjusted CPA = Total Costs / Total Orders (weighted calculation)
+      const adjustedCpa = data.orders > 0 ? totalCost / data.orders : 0;
       const profit = data.revenue - totalCost;
 
       // Get comparison data
@@ -155,7 +140,8 @@ export const usePortfolioChartData = (
           const compData = comparisonMonthlyData.get(comparisonDate)!;
           const compTotalCost = compData.adSpend + compData.nonAdCosts + compData.thirdPartyCosts;
           const compAvgOrderValue = compData.orders > 0 ? compData.revenue / compData.orders : 0;
-          const compAdjustedCpa = compData.adjustedCpaCount > 0 ? compData.adjustedCpaSum / compData.adjustedCpaCount : 0;
+          // Portfolio-level Adjusted CPA = Total Costs / Total Orders (weighted calculation)
+          const compAdjustedCpa = compData.orders > 0 ? compTotalCost / compData.orders : 0;
           const compProfit = compData.revenue - compTotalCost;
 
           comparisonMetrics = {
