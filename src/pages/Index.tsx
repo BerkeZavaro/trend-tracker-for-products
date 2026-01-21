@@ -43,11 +43,20 @@ const Index = () => {
   // Set default END date based on latest month in data when first loaded
   useEffect(() => {
     if (dataDateRange && !hasInitializedTimeFrame) {
-      // Only update the END date to the latest month in data
-      // Keep the start date as the default (2024-01)
+      // Convert dataDateRange.end from "M/YYYY" to "YYYY-MM" for the date picker
+      let formattedEnd = dataDateRange.end;
+      
+      // If it's in M/YYYY or MM/YYYY format, convert to YYYY-MM
+      const slashMatch = dataDateRange.end.match(/^(\d{1,2})\/(\d{4})$/);
+      if (slashMatch) {
+        const month = slashMatch[1].padStart(2, '0');
+        const year = slashMatch[2];
+        formattedEnd = `${year}-${month}`;
+      }
+      
       const newTimeFrame = {
-        start: pendingTimeFrame.start, // Keep existing start date
-        end: dataDateRange.end // Set end to latest month in data
+        start: pendingTimeFrame.start, // Keep existing start date (2024-01)
+        end: formattedEnd // Set end to latest month in data (formatted for picker)
       };
       setPendingTimeFrame(newTimeFrame);
       setAppliedTimeFrame(newTimeFrame);
