@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import AppHeader from '@/components/layout/AppHeader';
 import ExcelUpload from '@/components/ExcelUpload';
@@ -20,7 +20,45 @@ const Index = () => {
   });
   const [pendingAnalysisType, setPendingAnalysisType] = useState<'summary' | 'detailed'>('summary');
   const [appliedAnalysisType, setAppliedAnalysisType] = useState<'summary' | 'detailed'>('summary');
-  const { isDataLoaded } = useData();
+  const [hasInitializedTimeFrame, setHasInitializedTimeFrame] = useState(false);
+  const { isDataLoaded, uploadedData } = useData();
+
+  // Calculate the date range from uploaded data
+  const dataDateRange = useMemo(() => {
+    if (!uploadedData || uploadedData.length === 0) return null;
+    
+    const months = uploadedData
+      .map(item => item.month)
+      .filter(month => month && typeof month === 'string')
+      .sort();
+    
+    if (months.length === 0) return null;
+    
+    return {
+      start: months[0],
+      end: months[months.length - 1]
+    };
+  }, [uploadedData]);
+
+  // Set default time frame based on data when first loaded
+  useEffect(() => {
+    if (dataDateRange && !hasInitializedTimeFrame) {
+      const newTimeFrame = {
+        start: dataDateRange.start,
+        end: dataDateRange.end
+      };
+      setPendingTimeFrame(newTimeFrame);
+      setAppliedTimeFrame(newTimeFrame);
+      setHasInitializedTimeFrame(true);
+    }
+  }, [dataDateRange, hasInitializedTimeFrame]);
+
+  // Reset initialization flag when data is cleared
+  useEffect(() => {
+    if (!isDataLoaded) {
+      setHasInitializedTimeFrame(false);
+    }
+  }, [isDataLoaded]);
 
   const hasUnappliedChanges = 
     pendingTimeFrame.start !== appliedTimeFrame.start || 
