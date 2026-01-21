@@ -52,21 +52,8 @@ export const useProductAnalysis = (timeFrame: { start: string; end: string }) =>
   };
 
   const calculatePreviousPeriod = () => {
-    // Validate timeFrame dates before calculating
-    if (!timeFrame.start || !timeFrame.end || 
-        !/^\d{4}-\d{2}$/.test(timeFrame.start) || 
-        !/^\d{4}-\d{2}$/.test(timeFrame.end)) {
-      return { start: '', end: '' };
-    }
-
     const startDate = new Date(timeFrame.start + '-01');
     const endDate = new Date(timeFrame.end + '-01');
-    
-    // Check for invalid dates
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return { start: '', end: '' };
-    }
-
     const periodLength = (endDate.getFullYear() - startDate.getFullYear()) * 12 + 
                         (endDate.getMonth() - startDate.getMonth()) + 1;
     
@@ -74,11 +61,6 @@ export const useProductAnalysis = (timeFrame: { start: string; end: string }) =>
     previousEndDate.setMonth(previousEndDate.getMonth() - 1);
     const previousStartDate = new Date(previousEndDate);
     previousStartDate.setMonth(previousStartDate.getMonth() - periodLength + 1);
-    
-    // Final validation before returning
-    if (isNaN(previousStartDate.getTime()) || isNaN(previousEndDate.getTime())) {
-      return { start: '', end: '' };
-    }
     
     return {
       start: previousStartDate.toISOString().slice(0, 7),
