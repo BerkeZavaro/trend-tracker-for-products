@@ -40,12 +40,14 @@ const Index = () => {
     };
   }, [uploadedData]);
 
-  // Set default time frame based on data when first loaded
+  // Set default END date based on latest month in data when first loaded
   useEffect(() => {
     if (dataDateRange && !hasInitializedTimeFrame) {
+      // Only update the END date to the latest month in data
+      // Keep the start date as the default (2024-01)
       const newTimeFrame = {
-        start: dataDateRange.start,
-        end: dataDateRange.end
+        start: pendingTimeFrame.start, // Keep existing start date
+        end: dataDateRange.end // Set end to latest month in data
       };
       setPendingTimeFrame(newTimeFrame);
       setAppliedTimeFrame(newTimeFrame);
