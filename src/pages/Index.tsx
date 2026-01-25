@@ -13,31 +13,53 @@ const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const [pendingTimeFrame, setPendingTimeFrame] = useState<{ start: string; end: string }>({
     start: '2024-01',
-    end: '2025-06'
+    end: '2024-01'
   });
   const [appliedTimeFrame, setAppliedTimeFrame] = useState<{ start: string; end: string }>({
     start: '2024-01',
-    end: '2025-06'
+    end: '2024-01'
   });
   const [pendingAnalysisType, setPendingAnalysisType] = useState<'summary' | 'detailed'>('summary');
   const [appliedAnalysisType, setAppliedAnalysisType] = useState<'summary' | 'detailed'>('summary');
+  const [isDateRangeReady, setIsDateRangeReady] = useState(false);
   const { isDataLoaded, uploadedData } = useData();
   
   // Track if we've already auto-applied for this dataset
   const lastAppliedDataLength = useRef<number>(0);
 
+  // Reset date range ready state when data is cleared
+  useEffect(() => {
+    if (uploadedData.length === 0) {
+      setIsDateRangeReady(false);
+      lastAppliedDataLength.current = 0;
+    }
+  }, [uploadedData.length]);
+
   // Auto-detect date range from uploaded data and apply immediately
   useEffect(() => {
     if (uploadedData.length > 0 && uploadedData.length !== lastAppliedDataLength.current) {
+      // Mark as not ready while processing
+      setIsDateRangeReady(false);
+      
       const dateAnalysis = analyzeDataDates(uploadedData);
       const detectedRange = dateAnalysis.detectedRange;
       
-      if (detectedRange.start && detectedRange.end) {
+      if (detectedRange.end) {
+        // Start Date: Always January 2024
+        // End Date: Auto-detected from data
+        const finalRange = {
+          start: '2024-01',
+          end: detectedRange.end
+        };
+        
         // Update both pending and applied time frames
-        setPendingTimeFrame(detectedRange);
-        setAppliedTimeFrame(detectedRange);
+        setPendingTimeFrame(finalRange);
+        setAppliedTimeFrame(finalRange);
         lastAppliedDataLength.current = uploadedData.length;
-        console.log('Auto-detected date range:', detectedRange);
+        
+        // Mark as ready after processing
+        setIsDateRangeReady(true);
+        console.log('Auto-detected date range:', finalRange);
       }
     }
   }, [uploadedData]);
@@ -71,6 +93,7 @@ const Index = () => {
               hasUnappliedChanges={hasUnappliedChanges}
               handleApplyAnalysis={handleApplyAnalysis}
               isPortfolio={true}
+              isLoading={!isDateRangeReady}
             />
 
             <PortfolioOverview 
@@ -96,6 +119,7 @@ const Index = () => {
             hasUnappliedChanges={hasUnappliedChanges}
             handleApplyAnalysis={handleApplyAnalysis}
             isPortfolio={false}
+            isLoading={!isDateRangeReady}
           />
         )}
 
