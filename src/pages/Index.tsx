@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useData } from '@/contexts/DataContext';
 import AppHeader from '@/components/layout/AppHeader';
 import ExcelUpload from '@/components/ExcelUpload';
@@ -7,6 +7,7 @@ import TimeFrameSection from '@/components/sections/TimeFrameSection';
 import ProductSelectionSection from '@/components/sections/ProductSelectionSection';
 import PortfolioOverview from '@/components/sections/PortfolioOverview';
 import ProductAnalysis from '@/components/sections/ProductAnalysis';
+import { analyzeDataDates } from '@/utils/smartDateDetection';
 
 const Index = () => {
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -20,7 +21,26 @@ const Index = () => {
   });
   const [pendingAnalysisType, setPendingAnalysisType] = useState<'summary' | 'detailed'>('summary');
   const [appliedAnalysisType, setAppliedAnalysisType] = useState<'summary' | 'detailed'>('summary');
-  const { isDataLoaded } = useData();
+  const { isDataLoaded, uploadedData } = useData();
+  
+  // Track if we've already auto-applied for this dataset
+  const lastAppliedDataLength = useRef<number>(0);
+
+  // Auto-detect date range from uploaded data and apply immediately
+  useEffect(() => {
+    if (uploadedData.length > 0 && uploadedData.length !== lastAppliedDataLength.current) {
+      const dateAnalysis = analyzeDataDates(uploadedData);
+      const detectedRange = dateAnalysis.detectedRange;
+      
+      if (detectedRange.start && detectedRange.end) {
+        // Update both pending and applied time frames
+        setPendingTimeFrame(detectedRange);
+        setAppliedTimeFrame(detectedRange);
+        lastAppliedDataLength.current = uploadedData.length;
+        console.log('Auto-detected date range:', detectedRange);
+      }
+    }
+  }, [uploadedData]);
 
   const hasUnappliedChanges = 
     pendingTimeFrame.start !== appliedTimeFrame.start || 
